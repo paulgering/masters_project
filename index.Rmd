@@ -4,6 +4,7 @@
 library(here) #locate files based on current working directory
 library(MASS) #Fit negative binomial regression
 library(pwr) #Conduct power analysis
+library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 ```
 
 # Load the data 
