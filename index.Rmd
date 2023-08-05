@@ -70,6 +70,8 @@ M7 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_all_count ,family=poisson,data
 summary(M7)
 ```
 
+# Testing for overdispersion
+
 # Testing Prediction 1: Infants who produce more PCA's will have a alrger vocabulary size at 18 months 
 
 ```{r}
