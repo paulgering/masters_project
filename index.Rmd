@@ -1,10 +1,9 @@
 ## Loading packages
 
 ```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
-library(here)
-library(MASS)
-
-
+library(here) #locate files based on current working directory
+library(MASS) #Fit negative binomial regression
+library(pwr) #Conduct power analysis
 ```
 
 # Load the data 
@@ -203,9 +202,6 @@ baselinerate =
 
 # Define the observed rate
 observed_rate = 
-
-# Load the required library for power analysis
-library(pwr)
 
 # Perform a post hoc power analysis using a Poisson test
 pwr.ppois(lambda1 = baselinerate, lambda2 = observed_rate, alpha = 0.05, power = NULL)
