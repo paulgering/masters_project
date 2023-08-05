@@ -1,19 +1,26 @@
+## Loading packages
+
+```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
+library(here)
+library(MASS)
+
+
+```
+
 # Load the data 
 
 ```{r}
-library(here)
 df <- read.csv(here("data"))
 ```
 
-# Poisson Regression
-## Model 0 - Null Model 
+## Fitting the models to a Poisson Distribution
+### Model 0 - Null Model 
 
 ```{r}
 M0 = glm(18m_cdi_vocab_count ~ condition, family = Poisson, data=df)
 ```
 
-
-## Model 1 - Count of infant 'intentional Prelinguistic Communicative Acts
+### Model 1 - Count of infant 'intentional Prelinguistic Communicative Acts
 
 ```{r}
 M1 = glm(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df)
@@ -21,7 +28,7 @@ M1 = glm(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df
 summary(M1)
 ```
 
-## Model 2 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a response of any kind
+### Model 2 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a response of any kind
 
 ```{r}
 M2 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_pca_only_count ,family=poisson,data=df)
@@ -29,7 +36,7 @@ M2 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_pca_only_count ,family=
 summary(M2)
 ```
 
-## Model 3 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a content-light response
+### Model 3 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a content-light response
 
 ```{r}
 M3 = glm(18m_cdi_vocab_count ~ condition + 12m_cl_pca_only_count ,family=poisson,data=df)
@@ -37,7 +44,7 @@ M3 = glm(18m_cdi_vocab_count ~ condition + 12m_cl_pca_only_count ,family=poisson
 summary(M3)
 ```
 
-## Model 4 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a semantically contingent response
+### Model 4 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a semantically contingent response
 
 ```{r}
 M4 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_pca_only_count ,family=poisson,data=df)
@@ -46,7 +53,7 @@ M4 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_pca_only_count ,family=poisson
 summary(M4)
 ```
 
-## Model 5 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a response of any kind
+### Model 5 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a response of any kind
 
 ```{r}
 M5 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_all_count ,family=poisson,data=df)
@@ -54,7 +61,7 @@ M5 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_all_count ,family=poiss
 summary(M5)
 ```
 
-## Model 6 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a content-light response
+### Model 6 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a content-light response
 
 ```{r}
 M6 = glm(18m_cdi_vocab_count ~ condition + 12m_cl_all_count ,family=poisson,data=df)
@@ -62,7 +69,7 @@ M6 = glm(18m_cdi_vocab_count ~ condition + 12m_cl_all_count ,family=poisson,data
 summary(M6)
 ```
 
-## Model 7 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a semantically contingent response
+### Model 7 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a semantically contingent response
 
 ```{r}
 M7 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_all_count ,family=poisson,data=df)
@@ -70,7 +77,75 @@ M7 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_all_count ,family=poisson,data
 summary(M7)
 ```
 
-# Testing for overdispersion
+## Testing for overdispersion
+Determine whether overdispersion has occurred for any of the built models using the overdisp_fun. The code used to write the function were taken from the [GLMM FAGQ](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#overdispersion) by Ben Bolker and colleagues.
+
+```{r}
+# creating the overdisp_fun function
+overdisp_fun <- function(model) {
+    rdf <- df.residual(model)
+    rp <- residuals(model,type="pearson")
+    Pearson.chisq <- sum(rp^2)
+    prat <- Pearson.chisq/rdf
+    pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+    c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+# Testing for overdispersion in each of the models
+overdisp_fun(M1)
+overdisp_fun(M2)
+overdisp_fun(M3)
+overdisp_fun(M4)
+overdisp_fun(M5)
+overdisp_fun(M6)
+overdisp_fun(M7)
+```
+
+# Negative binomial analyses 
+If any of these tests detect overdispersion, a negative binomial regression will be fitted instead.
+
+```{r}
+M1_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df)
+
+summary(M1)
+```
+
+```{r}
+M2_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_responses_pca_only_count ,family=poisson,data=df)
+
+summary(M2)
+```
+
+```{r}
+M3_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_cl_pca_only_count ,family=poisson,data=df)
+
+summary(M3)
+```
+
+```{r}
+M4_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_sc_pca_only_count ,family=poisson,data=df)
+
+
+summary(M4)
+```
+
+```{r}
+M5_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_responses_all_count ,family=poisson,data=df)
+
+summary(M5)
+```
+
+```{r}
+M6_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_cl_all_count ,family=poisson,data=df)
+
+summary(M6)
+```
+
+```{r}
+M7_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_sc_all_count ,family=poisson,data=df)
+
+summary(M7)
+```
 
 # Testing Prediction 1: Infants who produce more PCA's will have a alrger vocabulary size at 18 months 
 
