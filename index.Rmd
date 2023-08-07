@@ -8,7 +8,7 @@ library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(AER) #conduct an overdispersion test on Poisson Models
 ```
 
-## Post-Hoc Power Analysis
+## Prospective Power Analysis
 
 ```{r}
 baselinerate = 4
@@ -37,6 +37,14 @@ df <- read.csv(here("data"))
 
 ## Preparing the researcher-coded behaviours 
 
+```{r}
+df1 <- df %>%
+  mutate(across(
+    starts_with("12m_") & !matches("12m_length"),
+    ~ ((. + 1) / 12m_length) * 300,
+    .names = "{.col}_pro"
+  ))
+```
 
 ## Fitting the models to a Poisson Distribution
 ### Model 0 - Null Model 
@@ -45,7 +53,7 @@ df <- read.csv(here("data"))
 M0 = glm(18m_cdi_vocab_count ~ condition, family = Poisson, data=df)
 ```
 
-### Model 1 - Count of infant 'intentional Prelinguistic Communicative Acts
+### Model 1 - Count of infant 'intentional' Prelinguistic Communicative Acts
 
 ```{r}
 M1 = glm(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df)
@@ -53,7 +61,7 @@ M1 = glm(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df
 summary(M1)
 ```
 
-### Model 2 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a response of any kind
+### Model 2 - Count of infant 'intentional' Prelinguistic Communicative Acts that elicited a response of any kind
 
 ```{r}
 M2 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_pca_only_count ,family=poisson,data=df)
@@ -165,7 +173,7 @@ summary(M7)
 ## Testing Prediction 1: Infants who produce more PCA's will have a alrger vocabulary size at 18 months 
 
 ```{r}
-anova(M1, M0)
+anova(M1_nb, M1)
 ```
 
 If the tests detect overdispersion for any of the models, the models built using a negative binomial regression will be included in this code instead of the models built using a Poisson Regression. 
@@ -173,35 +181,35 @@ If the tests detect overdispersion for any of the models, the models built using
 EXAMPLE: If overdispersion is detected for model 1: 
 
 ```{r}
-anova(M1_nb, M0)
+anova(M1, M0)
 ```
 
 ## Testing Prediction 2: The combination of PCA + response will be a better predictor of vocabulary size than all PCAs including those not met with a response 
 
 ```{r}
-model.sel(M2, M1)
+model.sel(M1, M2)
 ```
 
 ## Testing Prediction 3: Infant PCAs that elicit a semantically contingent response will be the strongest predictor of vocabulary over and above other sequences
 
 ```{r}
-model.sel(M4, M1, M2, M3, M5, M6, M7)
+model.sel(M1, M2, M3, M4, M5, M6, M7)
 ```
 
 ## Testing Prediction 4: Infant ‘intentional’ PCAs and non-gaze-coordinated vocalisations that, regardless of infant intent, elicit a semantically contingent response (measure 2c) will predict vocabulary better than those that elicit other responses (measure 2a, any response, or measure 2b, a content light response)
 
 ```{r}
-model.sel(M7, M5, M6)
+model.sel(M5, M6, M7)
 ```
 
 ## Exploratory analysis 1: Assessing the predictive value of content light responses relative to other kinds of responses
 
 ```{r}
-model.sel(M3, M2, M4)
+model.sel(M2, M3, M4)
 ```
 
 ```{r}
-model.sel(M6, M5, M7)
+model.sel(M5, M6, M7)
 ```
 
 ## Exploratory analysis 2: Assessing the predictive value of Infant intentional PCAs relative to a larger set of behaviours including non-gaze coordinated vocalisations
