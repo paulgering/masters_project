@@ -50,7 +50,7 @@ df <- read.csv(here("data"))
 
 ## Preparing the researcher-coded behaviours 
 
-The below code is used to prepare the counts of researcher-coded behaviours prior to incorporating them into Poisson regression models. The code takes the columns that begin with 12 months data and mutates them using the following steps: 
+The below code is used to prepare the counts of researcher-coded behaviours prior to incorporating them into Poisson regression models. The code takes the columns that begin with 12 months, which happens to be the columns containing the counts of researcher-coded behaviours (aside from 12m_length), and mutates them using the following steps: 
 1. Adding one to the counts to avoid zero counts 
 2. Prorating the counts by Dividing them by the length of the videos at 12 months and multiplying them by 300 (the maximum length of a video)
 3. Log transforming the counts to reduce skewness
