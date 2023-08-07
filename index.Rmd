@@ -189,14 +189,20 @@ model.sel(M4, M7)
 # Post-Hoc Power Analysis
 
 ```{r}
-# Define the baseline rate
-baselinerate = 
+baselinerate = 4
 
-# Define the observed rate
-observed_rate = 
+#Small effect size
 
-# Perform a post hoc power analysis using a Poisson test
-pwr.ppois(lambda1 = baselinerate, lambda2 = observed_rate, alpha = 0.05, power = NULL)
+d=0.2
+
+lo=d*(pi/sqrt(3))
+
+increase = exp(lo)
+
+slope=(baselinerate+increase)/baselinerate
+
+wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = "Bernoulli", alternative="greater")
+
 
 ```
 
