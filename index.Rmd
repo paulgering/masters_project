@@ -63,6 +63,8 @@ df1 <- df %>%
     ~ (((log(((. + 1) / 12m_length) * 300)) - median(.)) / IQR(.)),
     .names = "{.col}_pro"
   ))
+
+# robust scaling to be done with the log transformed variables 
 ```
 
 ## Fitting the models to a Poisson Distribution
@@ -194,7 +196,7 @@ summary(M7)
 ## Testing Prediction 1: Infants who produce more PCA's will have a alrger vocabulary size at 18 months 
 
 ```{r}
-anova(M1_nb, M1)
+anova(M1, M0)
 ```
 
 If the tests detect overdispersion for any of the models, the models built using a negative binomial regression will be included in this code instead of the models built using a Poisson Regression. 
@@ -202,7 +204,7 @@ If the tests detect overdispersion for any of the models, the models built using
 EXAMPLE: If overdispersion is detected for model 1: 
 
 ```{r}
-anova(M1, M0)
+anova(M1_nb, M0)
 ```
 
 ## Testing Prediction 2: The combination of PCA + response will be a better predictor of vocabulary size than all PCAs including those not met with a response 
@@ -246,3 +248,4 @@ model.sel(M3, M6)
 ```{r}
 model.sel(M4, M7)
 ```
+
