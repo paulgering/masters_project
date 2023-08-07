@@ -1,11 +1,12 @@
 ## Loading packages
 
 ```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
+library(AER) #conduct an overdispersion test on Poisson Models
+library(dplyr) #Preparing the data for analysis
 library(here) #locate files based on current working directory
 library(MASS) #Fit negative binomial regression
-library(WebPower) #Conduct power analysis
 library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
-library(AER) #conduct an overdispersion test on Poisson Models
+library(WebPower) #Conduct power analysis
 ```
 
 ## Prospective Power Analysis
