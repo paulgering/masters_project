@@ -3,7 +3,7 @@
 ```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
 library(here) #locate files based on current working directory
 library(MASS) #Fit negative binomial regression
-library(pwr) #Conduct power analysis
+library(WebPower) #Conduct power analysis
 library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(AER) #conduct an overdispersion test on Poisson Models
 ```
