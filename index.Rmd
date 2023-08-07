@@ -8,11 +8,35 @@ library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(AER) #conduct an overdispersion test on Poisson Models
 ```
 
-# Load the data 
+## Post-Hoc Power Analysis
+
+```{r}
+baselinerate = 4
+
+#Small effect size
+
+d=0.2
+
+lo=d*(pi/sqrt(3))
+
+increase = exp(lo)
+
+slope=(baselinerate+increase)/baselinerate
+
+wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = "Bernoulli", alternative="greater")
+
+
+```
+
+
+## Load the data 
 
 ```{r}
 df <- read.csv(here("data"))
 ```
+
+## Preparing the researcher-coded behaviours 
+
 
 ## Fitting the models to a Poisson Distribution
 ### Model 0 - Null Model 
@@ -193,24 +217,3 @@ model.sel(M3, M6)
 ```{r}
 model.sel(M4, M7)
 ```
-
-# Post-Hoc Power Analysis
-
-```{r}
-baselinerate = 4
-
-#Small effect size
-
-d=0.2
-
-lo=d*(pi/sqrt(3))
-
-increase = exp(lo)
-
-slope=(baselinerate+increase)/baselinerate
-
-wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = "Bernoulli", alternative="greater")
-
-
-```
-
