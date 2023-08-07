@@ -144,6 +144,14 @@ summary(M7)
 anova(M1, M0)
 ```
 
+If the tests detect overdispersion for any of the models, the models built using a negative binomial regression will be included in this code instead of the models built using a Poisson Regression. 
+
+EXAMPLE: If overdispersion is detected for model 1: 
+
+```{r}
+anova(M1_nb, M0)
+```
+
 ## Testing Prediction 2: The combination of PCA + response will be a better predictor of vocabulary size than all PCAs including those not met with a response 
 
 ```{r}
