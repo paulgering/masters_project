@@ -9,12 +9,19 @@ library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(WebPower) #Conduct power analysis
 ```
 
-## Prospective Power Analysis
-
-Conducting a prospective power analysis to determine the sample size that would be required to detect a small/medium effect size 
+## Load the data 
+Loading the data from the current working directory.
 
 ```{r}
-baselinerate = 4 #Baseline rate of infant vocab size
+df <- read.csv(here("data"))
+```
+
+## Prospective Power Analysis
+
+Conducting a prospective power analysis to determine the sample size that would be required to detect a small/medium effect size. The median of 
+
+```{r}
+baselinerate = median(df$18m_cdi_vocab_count) #Baseline rate of infant vocab size
 
 #Small effect size
 
@@ -42,12 +49,6 @@ wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.
 
 ```
 
-## Load the data 
-
-```{r}
-df <- read.csv(here("data"))
-```
-
 ## Preparing the researcher-coded behaviours 
 
 The below code is used to prepare the counts of researcher-coded behaviours prior to incorporating them into Poisson regression models. The code takes the columns that begin with 12 months, which happens to be the columns containing the counts of researcher-coded behaviours (aside from 12m_length), and mutates them using the following steps: 
@@ -57,14 +58,33 @@ The below code is used to prepare the counts of researcher-coded behaviours prio
 4. Robust scaling by subtracting the median from each of the values and dividing by the interquartile range of each column 
 
 ```{r}
+# Proscaling and log transforming the counts
 df1 <- df %>%
   mutate(across(
     starts_with("12m_") & !matches("12m_length"),
-    ~ (((log(((. + 1) / 12m_length) * 300)) - median(.)) / IQR(.)),
+    ~ (log(((. + 1) / 12m_length) * 300)),
     .names = "{.col}_pro"
   ))
 
 # robust scaling to be done with the log transformed variables 
+df2 <- df1 %>% 
+  mutate(across(
+    starts_with("12m_") & !matches('12m_lenth'),
+    ~ ((. - median(.)) / IQR(.)), 
+    .names = "{.col}_comp"
+  ))
+
+```
+
+## Centering the control variables condition around 0
+
+```{r}
+# Centering condition around 0
+df2$condition <- df2$condition - 0.5
+
+# Centering age around the mean 
+df3 <- df2 %>% 
+  scale(age, center = TRUE, scale = FALSE)
 ```
 
 ## Fitting the models to a Poisson Distribution
@@ -73,13 +93,13 @@ Building the models using poisson regressions.
 ### Model 0 - Null Model 
 
 ```{r}
-M0 = glm(18m_cdi_vocab_count ~ condition, family = Poisson, data=df)
+M0 = glm(18m_cdi_vocab_count ~ condition + age, family = Poisson, data=df3)
 ```
 
 ### Model 1 - Count of infant 'intentional' Prelinguistic Communicative Acts
 
 ```{r}
-M1 = glm(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df1)
+M1 = glm(18m_cdi_vocab_count ~ condition + age + 12m_pca_count ,family=poisson,data=df3)
 
 summary(M1)
 ```
@@ -87,7 +107,7 @@ summary(M1)
 ### Model 2 - Count of infant 'intentional' Prelinguistic Communicative Acts that elicited a response of any kind
 
 ```{r}
-M2 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_pca_only_count ,family=poisson,data=df1)
+M2 = glm(18m_cdi_vocab_count ~ condition + age + 12m_responses_pca_only_count ,family=poisson,data=df3)
 
 summary(M2)
 ```
@@ -95,7 +115,7 @@ summary(M2)
 ### Model 3 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a content-light response
 
 ```{r}
-M3 = glm(18m_cdi_vocab_count ~ condition + 12m_cl_pca_only_count ,family=poisson,data=df1)
+M3 = glm(18m_cdi_vocab_count ~ condition + age + 12m_cl_pca_only_count ,family=poisson,data=df3)
 
 summary(M3)
 ```
@@ -103,7 +123,7 @@ summary(M3)
 ### Model 4 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a semantically contingent response
 
 ```{r}
-M4 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_pca_only_count ,family=poisson,data=df1)
+M4 = glm(18m_cdi_vocab_count ~ condition + age + 12m_sc_pca_only_count ,family=poisson,data=df3)
 
 
 summary(M4)
@@ -112,7 +132,7 @@ summary(M4)
 ### Model 5 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a response of any kind
 
 ```{r}
-M5 = glm(18m_cdi_vocab_count ~ condition + 12m_responses_all_count ,family=poisson,data=df1)
+M5 = glm(18m_cdi_vocab_count ~ condition + age + 12m_responses_all_count ,family=poisson,data=df3)
 
 summary(M5)
 ```
@@ -120,7 +140,7 @@ summary(M5)
 ### Model 6 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a content-light response
 
 ```{r}
-M6 = glm(18m_cdi_vocab_count ~ condition + 12m_cl_all_count ,family=poisson,data=df1)
+M6 = glm(18m_cdi_vocab_count ~ condition + age + 12m_cl_all_count ,family=poisson,data=df3)
 
 summary(M6)
 ```
@@ -128,7 +148,7 @@ summary(M6)
 ### Model 7 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a semantically contingent response
 
 ```{r}
-M7 = glm(18m_cdi_vocab_count ~ condition + 12m_sc_all_count ,family=poisson,data=df1)
+M7 = glm(18m_cdi_vocab_count ~ condition + age + 12m_sc_all_count ,family=poisson,data=df3)
 
 summary(M7)
 ```
@@ -151,44 +171,44 @@ dispersiontest(M7)
 If any of these tests detect overdispersion, a negative binomial regression will be fitted instead.
 
 ```{r}
-M1_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_pca_count ,family=poisson,data=df1)
+M1_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_pca_count ,family=poisson,data=df3)
 
 summary(M1)
 ```
 
 ```{r}
-M2_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_responses_pca_only_count ,family=poisson,data=df1)
+M2_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_responses_pca_only_count ,family=poisson,data=df3)
 
 summary(M2)
 ```
 
 ```{r}
-M3_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_cl_pca_only_count ,family=poisson,data=df1)
+M3_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_cl_pca_only_count ,family=poisson,data=df3)
 
 summary(M3)
 ```
 
 ```{r}
-M4_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_sc_pca_only_count ,family=poisson,data=df1)
+M4_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_sc_pca_only_count ,family=poisson,data=df3)
 
 
 summary(M4)
 ```
 
 ```{r}
-M5_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_responses_all_count ,family=poisson,data=df1)
+M5_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_responses_all_count ,family=poisson,data=df3)
 
 summary(M5)
 ```
 
 ```{r}
-M6_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_cl_all_count ,family=poisson,data=df1)
+M6_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_cl_all_count ,family=poisson,data=df3)
 
 summary(M6)
 ```
 
 ```{r}
-M7_nb = glm.nb(18m_cdi_vocab_count ~ condition + 12m_sc_all_count ,family=poisson,data=df1)
+M7_nb = glm.nb(18m_cdi_vocab_count ~ condition + age + 12m_sc_all_count ,family=poisson,data=df3)
 
 summary(M7)
 ```
@@ -201,51 +221,26 @@ anova(M1, M0)
 
 If the tests detect overdispersion for any of the models, the models built using a negative binomial regression will be included in this code instead of the models built using a Poisson Regression. 
 
-EXAMPLE: If overdispersion is detected for model 1: 
+EXAMPLE: If overdispersion is detected for model 1 and the null model: 
+
+```{r}
+anova(M1_nb, M0_nb)
+```
+
+EXAMPLE: If overdispersion is detected for model 1 but not the null model: 
 
 ```{r}
 anova(M1_nb, M0)
 ```
 
-## Testing Prediction 2: The combination of PCA + response will be a better predictor of vocabulary size than all PCAs including those not met with a response 
+EXAMPLE: If overdispersion is detected for the null model but not model 1: 
 
 ```{r}
-model.sel(M1, M2)
+anova(M1, M0_nb)
 ```
 
-## Testing Prediction 3: Infant PCAs that elicit a semantically contingent response will be the strongest predictor of vocabulary over and above other sequences
+## Comparing the AIC of the models to test predictions 2, 3, and 4 and to answer two questions in a exploratory analyses
 
 ```{r}
 model.sel(M1, M2, M3, M4, M5, M6, M7)
 ```
-
-## Testing Prediction 4: Infant ‘intentional’ PCAs and non-gaze-coordinated vocalisations that, regardless of infant intent, elicit a semantically contingent response (measure 2c) will predict vocabulary better than those that elicit other responses (measure 2a, any response, or measure 2b, a content light response)
-
-```{r}
-model.sel(M5, M6, M7)
-```
-
-## Exploratory analysis 1: Assessing the predictive value of content light responses relative to other kinds of responses
-
-```{r}
-model.sel(M2, M3, M4)
-```
-
-```{r}
-model.sel(M5, M6, M7)
-```
-
-## Exploratory analysis 2: Assessing the predictive value of Infant intentional PCAs relative to a larger set of behaviours including non-gaze coordinated vocalisations
-
-```{r}
-model.sel(M2, M5)
-```
-
-```{r}
-model.sel(M3, M6)
-```
-
-```{r}
-model.sel(M4, M7)
-```
-
