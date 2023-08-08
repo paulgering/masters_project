@@ -1,6 +1,12 @@
 ## Loading packages
 
 ```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
+if (!require('renv')) 
+{
+  install.packages('renv');
+}
+library(renv) #Store packages and keep account of package versions
+renv::restore()
 library(AER) #conduct an overdispersion test on Poisson Models
 library(dplyr) #Preparing the data for analysis
 library(here) #locate files based on current working directory
@@ -12,30 +18,25 @@ library(WebPower) #Conduct power analysis
 ## Load the data 
 Loading the data from the current working directory.
 
-```{r}
-df <- read.csv(here("SCC_ID_data_blinded_PG"))
-```
-
 ## Testing the code
 ```{r}
 num_rows <- 125
 
 condition <- sample(0:1, num_rows, replace = TRUE)
-Twelvem_length <- sample(240:300, num_rows, replace = TRUE)
-Twelvem_pca_count <- sample(0:25, num_rows, replace = TRUE)
-Twelvem_sc_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
-Twelvem_cl_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
-Twelvem_responses_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
-Twelvem_sc_all_count <- sample(0:25, num_rows, replace = TRUE)
-Twelvem_cl_all_count <- sample(0:25, num_rows, replace = TRUE)
-Twelvem_responses_all_count <- sample(0:25, num_rows, replace = TRUE)
-Seventeenm_cdi_vocab_count <- sample(0:300, num_rows, replace = TRUE)
+age_at_survey <- sample(503:614, num_rows, replace = TRUE)
+twe_length <- sample(240:300, num_rows, replace = TRUE)
+twe_pca_count <- sample(0:25, num_rows, replace = TRUE)
+twe_sc_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
+twe_cl_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
+twe_responses_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
+twe_sc_all_count <- sample(0:25, num_rows, replace = TRUE)
+twe_cl_all_count <- sample(0:25, num_rows, replace = TRUE)
+twe_responses_all_count <- sample(0:25, num_rows, replace = TRUE)
+sev_cdi_vocab_count <- sample(0:300, num_rows, replace = TRUE)
 
 # Create a data frame with the generated columns
-artificial_data <- data.frame(condition, Twelvem_length, Twelvem_pca_count, Twelvem_sc_pca_only_count, Twelvem_cl_pca_only_count, Twelvem_responses_pca_only_count, Twelvem_sc_all_count, Twelvem_cl_all_count, Twelvem_responses_all_count)
+df <- data.frame(age_at_survey, condition, twe_length, twe_pca_count, twe_sc_pca_only_count, twe_cl_pca_only_count, twe_responses_pca_only_count, twe_sc_all_count, twe_cl_all_count, twe_responses_all_count, sev_cdi_vocab_count)
 
-# Print the first few rows of the artificial dataset
-print(head(artificial_data))
 ```
 
 ## Prospective Power Analysis
@@ -43,7 +44,7 @@ print(head(artificial_data))
 As the baselinerate, the median of infant vocab count will be used to ensure that we have an accurate calculation of the sample size that would have been needed to detect a small/medium effect size. 
 
 ```{r}
-baselinerate = median(df$18m_cdi_vocab_count) #Baseline rate of infant vocab size
+baselinerate = median(df$sev_cdi_vocab_count) #Baseline rate of infant vocab size
 
 #Small effect size
 
@@ -83,15 +84,15 @@ The below code is used to prepare the counts of researcher-coded behaviours prio
 # Proscaling and log transforming the counts
 df1 <- df %>%
   mutate(across(
-    starts_with("12m_") & !matches("12m_length"),
-    ~ (log(((. + 1) / 12m_length) * 300)),
+    starts_with("twe_") & !matches("twe_length"),
+    ~ (log(((. + 1) / twe_length) * 300)),
     .names = "{.col}_pro"
   ))
 
 # robust scaling to be done with the log transformed variables 
 df2 <- df1 %>% 
   mutate(across(
-    starts_with("12m_") & !matches('12m_lenth'),
+    starts_with("twe_") & !matches('twe_length'),
     ~ ((. - median(.)) / IQR(.)), 
     .names = "{.col}_comp"
   ))
@@ -105,8 +106,7 @@ df2 <- df1 %>%
 df2$condition <- df2$condition - 0.5
 
 # Centering age around the mean 
-df3 <- df2 %>% 
-  scale(age_at_survey, center = TRUE, scale = FALSE)
+df2$centered_age <- scale(df2$age_at_survey, center = TRUE, scale = FALSE)
 ```
 
 ## Fitting the models to a Poisson Distribution
@@ -115,13 +115,13 @@ Building the models using poisson regressions.
 ### Model 0 - Null Model 
 
 ```{r}
-M0 = glm(18m_cdi_vocab_count ~ condition + age_at_survey, family = Poisson, data=df3)
+M0 = glm(sev_cdi_vocab_count ~ condition + age_at_survey, family = poisson, data=df2)
 ```
 
 ### Model 1 - Count of infant 'intentional' Prelinguistic Communicative Acts
 
 ```{r}
-M1 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_pca_count ,family=poisson,data=df3)
+M1 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_pca_count ,family=poisson,data=df2)
 
 summary(M1)
 ```
@@ -129,7 +129,7 @@ summary(M1)
 ### Model 2 - Count of infant 'intentional' Prelinguistic Communicative Acts that elicited a response of any kind
 
 ```{r}
-M2 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_responses_pca_only_count ,family=poisson,data=df3)
+M2 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_pca_only_count ,family=poisson,data=df2)
 
 summary(M2)
 ```
@@ -137,7 +137,7 @@ summary(M2)
 ### Model 3 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a content-light response
 
 ```{r}
-M3 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_cl_pca_only_count ,family=poisson,data=df3)
+M3 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_pca_only_count ,family=poisson,data=df2)
 
 summary(M3)
 ```
@@ -145,7 +145,7 @@ summary(M3)
 ### Model 4 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a semantically contingent response
 
 ```{r}
-M4 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_sc_pca_only_count ,family=poisson,data=df3)
+M4 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_pca_only_count ,family=poisson,data=df2)
 
 
 summary(M4)
@@ -154,7 +154,7 @@ summary(M4)
 ### Model 5 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a response of any kind
 
 ```{r}
-M5 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_responses_all_count ,family=poisson,data=df3)
+M5 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_all_count ,family=poisson,data=df2)
 
 summary(M5)
 ```
@@ -162,7 +162,7 @@ summary(M5)
 ### Model 6 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a content-light response
 
 ```{r}
-M6 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_cl_all_count ,family=poisson,data=df3)
+M6 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_all_count ,family=poisson,data=df2)
 
 summary(M6)
 ```
@@ -170,7 +170,7 @@ summary(M6)
 ### Model 7 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a semantically contingent response
 
 ```{r}
-M7 = glm(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_sc_all_count ,family=poisson,data=df3)
+M7 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_all_count ,family=poisson,data=df2)
 
 summary(M7)
 ```
@@ -190,49 +190,55 @@ dispersiontest(M7)
 ```
 
 ## Negative binomial analyses 
-If any of these tests detect overdispersion, a negative binomial regression will be fitted instead.
+If any of the dispersion tests has p < 0.05, a negative binomial regression will be fitted instead and this should be reported instead.
 
 ```{r}
-M1_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_pca_count ,family=poisson,data=df3)
+M0_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey,data=df2)
 
-summary(M1)
+summary(M0_nb)
 ```
 
 ```{r}
-M2_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_responses_pca_only_count ,family=poisson,data=df3)
+M1_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_pca_count,data=df2)
 
-summary(M2)
+summary(M1_nb)
 ```
 
 ```{r}
-M3_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_cl_pca_only_count ,family=poisson,data=df3)
+M2_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_pca_only_count,data=df2)
 
-summary(M3)
+summary(M2_nb)
 ```
 
 ```{r}
-M4_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_sc_pca_only_count ,family=poisson,data=df3)
+M3_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_pca_only_count,data=df2)
 
-
-summary(M4)
+summary(M3_nb)
 ```
 
 ```{r}
-M5_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_responses_all_count ,family=poisson,data=df3)
+M4_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_pca_only_count,data=df2)
 
-summary(M5)
+
+summary(M4_nb)
 ```
 
 ```{r}
-M6_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_cl_all_count ,family=poisson,data=df3)
+M5_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_all_count,data=df2)
 
-summary(M6)
+summary(M5_nb)
 ```
 
 ```{r}
-M7_nb = glm.nb(18m_cdi_vocab_count ~ condition + age_at_survey + 12m_sc_all_count ,family=poisson,data=df3)
+M6_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_all_count,data=df2)
 
-summary(M7)
+summary(M6_nb)
+```
+
+```{r}
+M7_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_all_count,data=df2)
+
+summary(M7_nb)
 ```
 
 ## Testing Prediction 1: Infants who produce more PCA's will have a alrger vocabulary size at 18 months 

@@ -352,7 +352,811 @@ display: none;
 </div>
 
 
-<p>This will be full of stuff for my project.</p>
+<div id="loading-packages" class="section level2">
+<h2>Loading packages</h2>
+<pre class="r"><code>if (!require(&#39;renv&#39;)) 
+{
+  install.packages(&#39;renv&#39;);
+}
+library(renv)
+renv::restore()
+library(AER) #conduct an overdispersion test on Poisson Models
+library(dplyr) #Preparing the data for analysis
+library(here) #locate files based on current working directory
+library(MASS) #Fit negative binomial regression
+library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
+library(WebPower) #Conduct power analysis</code></pre>
+</div>
+<div id="load-the-data" class="section level2">
+<h2>Load the data</h2>
+<p>Loading the data from the current working directory.</p>
+</div>
+<div id="testing-the-code" class="section level2">
+<h2>Testing the code</h2>
+<pre class="r"><code>num_rows &lt;- 125
+
+condition &lt;- sample(0:1, num_rows, replace = TRUE)
+age_at_survey &lt;- sample(503:614, num_rows, replace = TRUE)
+twe_length &lt;- sample(240:300, num_rows, replace = TRUE)
+twe_pca_count &lt;- sample(0:25, num_rows, replace = TRUE)
+twe_sc_pca_only_count &lt;- sample(0:25, num_rows, replace = TRUE)
+twe_cl_pca_only_count &lt;- sample(0:25, num_rows, replace = TRUE)
+twe_responses_pca_only_count &lt;- sample(0:25, num_rows, replace = TRUE)
+twe_sc_all_count &lt;- sample(0:25, num_rows, replace = TRUE)
+twe_cl_all_count &lt;- sample(0:25, num_rows, replace = TRUE)
+twe_responses_all_count &lt;- sample(0:25, num_rows, replace = TRUE)
+sev_cdi_vocab_count &lt;- sample(0:300, num_rows, replace = TRUE)
+
+# Create a data frame with the generated columns
+df &lt;- data.frame(age_at_survey, condition, twe_length, twe_pca_count, twe_sc_pca_only_count, twe_cl_pca_only_count, twe_responses_pca_only_count, twe_sc_all_count, twe_cl_all_count, twe_responses_all_count, sev_cdi_vocab_count)</code></pre>
+</div>
+<div id="prospective-power-analysis" class="section level2">
+<h2>Prospective Power Analysis</h2>
+<p>As the baselinerate, the median of infant vocab count will be used to
+ensure that we have an accurate calculation of the sample size that
+would have been needed to detect a small/medium effect size.</p>
+<pre class="r"><code>baselinerate = median(df$sev_cdi_vocab_count) #Baseline rate of infant vocab size
+
+#Small effect size
+
+d=0.2
+
+lo=d*(pi/sqrt(3)) 
+
+increase = exp(lo)
+
+slope=(baselinerate+increase)/baselinerate #Calculating the expected slope based on an effect size of 0.2
+
+wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = &quot;Bernoulli&quot;, alternative=&quot;greater&quot;)</code></pre>
+<pre><code>## Power for Poisson regression
+## 
+##            n power alpha exp0     exp1    beta0       beta1
+##     1828.244   0.8  0.05  152 1.009456 5.023881 0.009411433
+## 
+## URL: http://psychstat.org/poisson</code></pre>
+<pre class="r"><code>#Medium effect size
+
+d=0.5
+
+lo=d*(pi/sqrt(3)) 
+
+increase = exp(lo)
+
+slope=(baselinerate+increase)/baselinerate # Calculating the expected slope based on an effect size of 0.5
+
+wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = &quot;Bernoulli&quot;, alternative=&quot;greater&quot;)</code></pre>
+<pre><code>## Power for Poisson regression
+## 
+##            n power alpha exp0     exp1    beta0      beta1
+##     617.8484   0.8  0.05  152 1.016294 5.023881 0.01616232
+## 
+## URL: http://psychstat.org/poisson</code></pre>
+</div>
+<div id="preparing-the-researcher-coded-behaviours" class="section level2">
+<h2>Preparing the researcher-coded behaviours</h2>
+<p>The below code is used to prepare the counts of researcher-coded
+behaviours prior to incorporating them into Poisson regression models.
+The code takes the columns that begin with 12 months, which happens to
+be the columns containing the counts of researcher-coded behaviours
+(aside from 12m_length), and mutates them using the following steps: 1.
+Adding one to the counts to avoid zero counts 2. Prorating the counts by
+Dividing them by the length of the videos at 12 months and multiplying
+them by 300 (the maximum length of a video) 3. Log transforming the
+counts to reduce skewness 4. Robust scaling by subtracting the median
+from each of the values and dividing by the interquartile range of each
+column</p>
+<pre class="r"><code># Proscaling and log transforming the counts
+df1 &lt;- df %&gt;%
+  mutate(across(
+    starts_with(&quot;twe_&quot;) &amp; !matches(&quot;twe_length&quot;),
+    ~ (log(((. + 1) / twe_length) * 300)),
+    .names = &quot;{.col}_pro&quot;
+  ))
+
+# robust scaling to be done with the log transformed variables 
+df2 &lt;- df1 %&gt;% 
+  mutate(across(
+    starts_with(&quot;twe_&quot;) &amp; !matches(&#39;twe_lenth&#39;),
+    ~ ((. - median(.)) / IQR(.)), 
+    .names = &quot;{.col}_comp&quot;
+  ))</code></pre>
+</div>
+<div id="centering-the-control-variables-condition-around-0" class="section level2">
+<h2>Centering the control variables condition around 0</h2>
+<pre class="r"><code># Centering condition around 0
+df2$condition &lt;- df2$condition - 0.5
+
+# Centering age around the mean 
+df2$centered_age &lt;- scale(df2$age_at_survey, center = TRUE, scale = FALSE)</code></pre>
+</div>
+<div id="fitting-the-models-to-a-poisson-distribution" class="section level2">
+<h2>Fitting the models to a Poisson Distribution</h2>
+<p>Building the models using poisson regressions.</p>
+<div id="model-0---null-model" class="section level3">
+<h3>Model 0 - Null Model</h3>
+<pre class="r"><code>M0 = glm(sev_cdi_vocab_count ~ condition + age_at_survey, family = poisson, data=df2)</code></pre>
+</div>
+<div id="model-1---count-of-infant-intentional-prelinguistic-communicative-acts" class="section level3">
+<h3>Model 1 - Count of infant ‘intentional’ Prelinguistic Communicative
+Acts</h3>
+<pre class="r"><code>M1 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_pca_count ,family=poisson,data=df2)
+
+summary(M1)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_pca_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -15.7781   -7.7425   -0.4298    5.0142   11.7854  
+## 
+## Coefficients:
+##                 Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)    5.5463187  0.1188465  46.668  &lt; 2e-16 ***
+## condition      0.1810188  0.0151876  11.919  &lt; 2e-16 ***
+## age_at_survey -0.0011305  0.0002163  -5.228 1.72e-07 ***
+## twe_pca_count  0.0048999  0.0010998   4.455 8.37e-06 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7206.4  on 121  degrees of freedom
+## AIC: 8024.2
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div id="model-2---count-of-infant-intentional-prelinguistic-communicative-acts-that-elicited-a-response-of-any-kind" class="section level3">
+<h3>Model 2 - Count of infant ‘intentional’ Prelinguistic Communicative
+Acts that elicited a response of any kind</h3>
+<pre class="r"><code>M2 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_pca_only_count ,family=poisson,data=df2)
+
+summary(M2)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_responses_pca_only_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -15.630   -7.530   -1.102    5.181   12.757  
+## 
+## Coefficients:
+##                                Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)                   5.4781904  0.1193027   45.92  &lt; 2e-16 ***
+## condition                     0.1737230  0.0151764   11.45  &lt; 2e-16 ***
+## age_at_survey                -0.0006279  0.0002157   -2.91  0.00361 ** 
+## twe_responses_pca_only_count -0.0125036  0.0009435  -13.25  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7050.2  on 121  degrees of freedom
+## AIC: 7868
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div id="model-3---count-of-infant-intentional-prelinguistic-communicative-acts-that-elicited-a-content-light-response" class="section level3">
+<h3>Model 3 - Count of infant ’intentional Prelinguistic Communicative
+Acts that elicited a content-light response</h3>
+<pre class="r"><code>M3 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_pca_only_count ,family=poisson,data=df2)
+
+summary(M3)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_cl_pca_only_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -14.7626   -7.1836   -0.0387    5.1174   12.3309  
+## 
+## Coefficients:
+##                         Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)            5.5421214  0.1190708  46.545  &lt; 2e-16 ***
+## condition              0.1720726  0.0151828  11.333  &lt; 2e-16 ***
+## age_at_survey         -0.0008318  0.0002143  -3.881 0.000104 ***
+## twe_cl_pca_only_count -0.0089425  0.0010370  -8.624  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7151.5  on 121  degrees of freedom
+## AIC: 7969.3
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div id="model-4---count-of-infant-intentional-prelinguistic-communicative-acts-that-elicited-a-semantically-contingent-response" class="section level3">
+<h3>Model 4 - Count of infant ’intentional Prelinguistic Communicative
+Acts that elicited a semantically contingent response</h3>
+<pre class="r"><code>M4 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_pca_only_count ,family=poisson,data=df2)
+
+
+summary(M4)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_sc_pca_only_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -15.3367   -7.6830   -0.6709    5.3857   13.4950  
+## 
+## Coefficients:
+##                         Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)            5.7147861  0.1216144  46.991  &lt; 2e-16 ***
+## condition              0.1917684  0.0152611  12.566  &lt; 2e-16 ***
+## age_at_survey         -0.0011211  0.0002151  -5.212 1.87e-07 ***
+## twe_sc_pca_only_count -0.0087082  0.0010172  -8.561  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7152.9  on 121  degrees of freedom
+## AIC: 7970.7
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div id="model-5---a-count-of-infant-intentional-prelinguistic-communicative-acts-non-gaze-coordinated-vocalisations-that-elicited-a-response-of-any-kind" class="section level3">
+<h3>Model 5 - A count of (infant ’intentional Prelinguistic
+Communicative Acts + non-gaze-coordinated vocalisations) that elicited a
+response of any kind</h3>
+<pre class="r"><code>M5 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_all_count ,family=poisson,data=df2)
+
+summary(M5)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_responses_all_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -15.4842   -7.8085   -0.2447    5.0688   11.7937  
+## 
+## Coefficients:
+##                           Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)              5.5671899  0.1211982  45.935  &lt; 2e-16 ***
+## condition                0.1752369  0.0151910  11.536  &lt; 2e-16 ***
+## age_at_survey           -0.0010137  0.0002147  -4.722 2.34e-06 ***
+## twe_responses_all_count -0.0023352  0.0009804  -2.382   0.0172 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7220.6  on 121  degrees of freedom
+## AIC: 8038.4
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div id="model-6---a-count-of-infant-intentional-prelinguistic-communicative-acts-non-gaze-coordinated-vocalisations-that-elicited-a-content-light-response" class="section level3">
+<h3>Model 6 - A count of (infant ’intentional Prelinguistic
+Communicative Acts + non-gaze-coordinated vocalisations) that elicited a
+content-light response</h3>
+<pre class="r"><code>M6 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_all_count ,family=poisson,data=df2)
+
+summary(M6)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_cl_all_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -15.6664   -7.3291   -0.3005    5.5937   11.6003  
+## 
+## Coefficients:
+##                    Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       5.4784030  0.1191631  45.974  &lt; 2e-16 ***
+## condition         0.1831709  0.0152452  12.015  &lt; 2e-16 ***
+## age_at_survey    -0.0009910  0.0002136  -4.639  3.5e-06 ***
+## twe_cl_all_count  0.0040187  0.0010394   3.866 0.000111 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7211.3  on 121  degrees of freedom
+## AIC: 8029.1
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div id="model-7---a-count-of-infant-intentional-prelinguistic-communicative-acts-non-gaze-coordinated-vocalisations-that-elicited-a-semantically-contingent-response" class="section level3">
+<h3>Model 7 - A count of (infant ’intentional Prelinguistic
+Communicative Acts + non-gaze-coordinated vocalisations) that elicited a
+semantically contingent response</h3>
+<pre class="r"><code>M7 = glm(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_all_count ,family=poisson,data=df2)
+
+summary(M7)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_sc_all_count, family = poisson, data = df2)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -15.4623   -7.5858   -0.1547    5.2945   11.9319  
+## 
+## Coefficients:
+##                    Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       5.5164334  0.1189814  46.364  &lt; 2e-16 ***
+## condition         0.1782166  0.0151792  11.741  &lt; 2e-16 ***
+## age_at_survey    -0.0009434  0.0002141  -4.406 1.05e-05 ***
+## twe_sc_all_count -0.0013639  0.0009380  -1.454    0.146    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 7393.0  on 124  degrees of freedom
+## Residual deviance: 7224.2  on 121  degrees of freedom
+## AIC: 8041.9
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+</div>
+<div id="testing-for-overdispersion" class="section level2">
+<h2>Testing for overdispersion</h2>
+<p>Determine whether overdispersion has occurred for any of the built
+models using the dispersiontest function.</p>
+<pre class="r"><code># Testing for overdispersion in each of the models
+dispersiontest(M1)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M1
+## z = 12.082, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.63918</code></pre>
+<pre class="r"><code>dispersiontest(M2)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M2
+## z = 11.5, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.35746</code></pre>
+<pre class="r"><code>dispersiontest(M3)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M3
+## z = 11.675, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.54477</code></pre>
+<pre class="r"><code>dispersiontest(M4)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M4
+## z = 11.569, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.53523</code></pre>
+<pre class="r"><code>dispersiontest(M5)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M5
+## z = 12.145, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.84266</code></pre>
+<pre class="r"><code>dispersiontest(M6)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M6
+## z = 12.087, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.65842</code></pre>
+<pre class="r"><code>dispersiontest(M7)</code></pre>
+<pre><code>## 
+##  Overdispersion test
+## 
+## data:  M7
+## z = 12.087, p-value &lt; 2.2e-16
+## alternative hypothesis: true dispersion is greater than 1
+## sample estimates:
+## dispersion 
+##   51.79977</code></pre>
+</div>
+<div id="negative-binomial-analyses" class="section level2">
+<h2>Negative binomial analyses</h2>
+<p>If any of the dispersion tests has p &lt; 0.05, a negative binomial
+regression will be fitted instead and this should be reported
+instead.</p>
+<pre class="r"><code>M0_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey,data=df2)
+
+summary(M0_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey, 
+##     data = df2, init.theta = 1.806177553, link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4310  -0.9865  -0.0287   0.5474   1.2527  
+## 
+## Coefficients:
+##                Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)    5.562687   1.068907   5.204 1.95e-07 ***
+## condition      0.179363   0.137694   1.303    0.193    
+## age_at_survey -0.001055   0.001916  -0.551    0.582    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8062) family taken to be 1)
+## 
+##     Null deviance: 139.58  on 124  degrees of freedom
+## Residual deviance: 137.46  on 122  degrees of freedom
+## AIC: 1476.8
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.806 
+##           Std. Err.:  0.219 
+## 
+##  2 x log-likelihood:  -1468.846</code></pre>
+<pre class="r"><code>M1_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_pca_count,data=df2)
+
+summary(M1_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_pca_count, data = df2, init.theta = 1.808456378, link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4262  -0.9838  -0.0377   0.5227   1.1806  
+## 
+## Coefficients:
+##                Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)    5.575142   1.070483   5.208 1.91e-07 ***
+## condition      0.179458   0.137780   1.302    0.193    
+## age_at_survey -0.001168   0.001944  -0.601    0.548    
+## twe_pca_count  0.004210   0.009844   0.428    0.669    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8085) family taken to be 1)
+## 
+##     Null deviance: 139.75  on 124  degrees of freedom
+## Residual deviance: 137.46  on 121  degrees of freedom
+## AIC: 1478.7
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.808 
+##           Std. Err.:  0.219 
+## 
+##  2 x log-likelihood:  -1468.673</code></pre>
+<pre class="r"><code>M2_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_pca_only_count,data=df2)
+
+summary(M2_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_responses_pca_only_count, data = df2, init.theta = 1.840626932, 
+##     link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4635  -0.9427  -0.1161   0.5405   1.3698  
+## 
+## Coefficients:
+##                                Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)                   5.3776313  1.0593174   5.077 3.84e-07 ***
+## condition                     0.2043016  0.1364301   1.497    0.134    
+## age_at_survey                -0.0004166  0.0019122  -0.218    0.828    
+## twe_responses_pca_only_count -0.0136759  0.0083816  -1.632    0.103    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8406) family taken to be 1)
+## 
+##     Null deviance: 142.13  on 124  degrees of freedom
+## Residual deviance: 137.34  on 121  degrees of freedom
+## AIC: 1476.2
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.841 
+##           Std. Err.:  0.224 
+## 
+##  2 x log-likelihood:  -1466.239</code></pre>
+<pre class="r"><code>M3_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_pca_only_count,data=df2)
+
+summary(M3_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_cl_pca_only_count, data = df2, init.theta = 1.822756735, 
+##     link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.3773  -0.9661  -0.0151   0.5190   1.3028  
+## 
+## Coefficients:
+##                         Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)            5.6135737  1.0644789   5.274 1.34e-07 ***
+## condition              0.1876197  0.1371574   1.368    0.171    
+## age_at_survey         -0.0009211  0.0019134  -0.481    0.630    
+## twe_cl_pca_only_count -0.0106844  0.0092215  -1.159    0.247    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8228) family taken to be 1)
+## 
+##     Null deviance: 140.81  on 124  degrees of freedom
+## Residual deviance: 137.40  on 121  degrees of freedom
+## AIC: 1477.6
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.823 
+##           Std. Err.:  0.221 
+## 
+##  2 x log-likelihood:  -1467.581</code></pre>
+<pre class="r"><code>M4_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_pca_only_count,data=df2)
+
+
+summary(M4_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_sc_pca_only_count, data = df2, init.theta = 1.820051325, 
+##     link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4267  -0.9999  -0.0663   0.5727   1.4641  
+## 
+## Coefficients:
+##                        Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)            5.722127   1.084526   5.276 1.32e-07 ***
+## condition              0.204338   0.137976   1.481    0.139    
+## age_at_survey         -0.001117   0.001915  -0.584    0.560    
+## twe_sc_pca_only_count -0.009345   0.009039  -1.034    0.301    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8201) family taken to be 1)
+## 
+##     Null deviance: 140.61  on 124  degrees of freedom
+## Residual deviance: 137.41  on 121  degrees of freedom
+## AIC: 1477.8
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.820 
+##           Std. Err.:  0.221 
+## 
+##  2 x log-likelihood:  -1467.789</code></pre>
+<pre class="r"><code>M5_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_responses_all_count,data=df2)
+
+summary(M5_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_responses_all_count, data = df2, init.theta = 1.807864484, 
+##     link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4250  -0.9672  -0.0317   0.5276   1.1951  
+## 
+## Coefficients:
+##                          Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)              5.617906   1.086229   5.172 2.32e-07 ***
+## condition                0.180612   0.137885   1.310    0.190    
+## age_at_survey           -0.001087   0.001922  -0.566    0.572    
+## twe_responses_all_count -0.003111   0.008663  -0.359    0.720    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8079) family taken to be 1)
+## 
+##     Null deviance: 139.70  on 124  degrees of freedom
+## Residual deviance: 137.46  on 121  degrees of freedom
+## AIC: 1478.7
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.808 
+##           Std. Err.:  0.219 
+## 
+##  2 x log-likelihood:  -1468.716</code></pre>
+<pre class="r"><code>M6_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_cl_all_count,data=df2)
+
+summary(M6_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_cl_all_count, data = df2, init.theta = 1.809051371, link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4390  -0.9860  -0.0445   0.5748   1.1740  
+## 
+## Coefficients:
+##                   Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       5.541796   1.070466   5.177 2.25e-07 ***
+## condition         0.186928   0.138252   1.352    0.176    
+## age_at_survey    -0.001110   0.001916  -0.579    0.562    
+## twe_cl_all_count  0.004270   0.009282   0.460    0.645    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8091) family taken to be 1)
+## 
+##     Null deviance: 139.79  on 124  degrees of freedom
+## Residual deviance: 137.45  on 121  degrees of freedom
+## AIC: 1478.6
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.809 
+##           Std. Err.:  0.219 
+## 
+##  2 x log-likelihood:  -1468.626</code></pre>
+<pre class="r"><code>M7_nb = glm.nb(sev_cdi_vocab_count ~ condition + age_at_survey + twe_sc_all_count,data=df2)
+
+summary(M7_nb)</code></pre>
+<pre><code>## 
+## Call:
+## glm.nb(formula = sev_cdi_vocab_count ~ condition + age_at_survey + 
+##     twe_sc_all_count, data = df2, init.theta = 1.806386854, link = log)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.4259  -0.9747  -0.0265   0.5342   1.2314  
+## 
+## Coefficients:
+##                   Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       5.565872   1.068977   5.207 1.92e-07 ***
+## condition         0.179409   0.137774   1.302    0.193    
+## age_at_survey    -0.001038   0.001922  -0.540    0.589    
+## twe_sc_all_count -0.001074   0.008390  -0.128    0.898    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for Negative Binomial(1.8064) family taken to be 1)
+## 
+##     Null deviance: 139.59  on 124  degrees of freedom
+## Residual deviance: 137.46  on 121  degrees of freedom
+## AIC: 1478.8
+## 
+## Number of Fisher Scoring iterations: 1
+## 
+## 
+##               Theta:  1.806 
+##           Std. Err.:  0.219 
+## 
+##  2 x log-likelihood:  -1468.830</code></pre>
+</div>
+<div id="testing-prediction-1-infants-who-produce-more-pcas-will-have-a-alrger-vocabulary-size-at-18-months" class="section level2">
+<h2>Testing Prediction 1: Infants who produce more PCA’s will have a
+alrger vocabulary size at 18 months</h2>
+<pre class="r"><code>anova(M1, M0)</code></pre>
+<pre><code>## Analysis of Deviance Table
+## 
+## Model 1: sev_cdi_vocab_count ~ condition + age_at_survey + twe_pca_count
+## Model 2: sev_cdi_vocab_count ~ condition + age_at_survey
+##   Resid. Df Resid. Dev Df Deviance
+## 1       121     7206.4            
+## 2       122     7226.3 -1   -19.84</code></pre>
+<p>If the tests detect overdispersion for any of the models, the models
+built using a negative binomial regression will be included in this code
+instead of the models built using a Poisson Regression.</p>
+<p>If overdispersion is detected for model 1 and the null model:</p>
+<pre class="r"><code>anova(M1_nb, M0_nb)</code></pre>
+<pre><code>## Likelihood ratio tests of Negative Binomial Models
+## 
+## Response: sev_cdi_vocab_count
+##                                       Model    theta Resid. df    2 x log-lik.
+## 1                 condition + age_at_survey 1.806178       122       -1468.846
+## 2 condition + age_at_survey + twe_pca_count 1.808456       121       -1468.673
+##     Test    df  LR stat.   Pr(Chi)
+## 1                                 
+## 2 1 vs 2     1 0.1731619 0.6773169</code></pre>
+</div>
+<div id="comparing-the-aic-of-the-models-to-test-predictions-2-3-and-4-and-to-answer-two-questions-in-an-exploratory-analysis" class="section level2">
+<h2>Comparing the AIC of the models to test predictions 2, 3, and 4 and
+to answer two questions in an exploratory analysis:</h2>
+<pre class="r"><code>model.sel(M1, M2, M3, M4, M5, M6, M7)</code></pre>
+<pre><code>## Model selection table 
+##    (Int) age_at_srv    cnd twe_pca_cnt twe_rsp_pca_onl_cnt twe_cl_pca_onl_cnt
+## M2 5.478 -0.0006279 0.1737                         -0.0125                   
+## M3 5.542 -0.0008318 0.1721                                          -0.008942
+## M4 5.715 -0.0011210 0.1918                                                   
+## M1 5.546 -0.0011310 0.1810      0.0049                                       
+## M6 5.478 -0.0009910 0.1832                                                   
+## M5 5.567 -0.0010140 0.1752                                                   
+## M7 5.516 -0.0009434 0.1782                                                   
+##    twe_sc_pca_onl_cnt twe_rsp_all_cnt twe_cl_all_cnt twe_sc_all_cnt df
+## M2                                                                   4
+## M3                                                                   4
+## M4          -0.008708                                                4
+## M1                                                                   4
+## M6                                          0.004019                 4
+## M5                          -0.002335                                4
+## M7                                                        -0.001364  4
+##       logLik   AICc  delta weight
+## M2 -3929.986 7868.3   0.00      1
+## M3 -3980.636 7969.6 101.30      0
+## M4 -3981.364 7971.1 102.76      0
+## M1 -4008.111 8024.6 156.25      0
+## M6 -4010.555 8029.4 161.14      0
+## M5 -4015.191 8038.7 170.41      0
+## M7 -4016.974 8042.3 173.98      0
+## Models ranked by AICc(x)</code></pre>
+<p>Alternative code in case overdispersion is detected in all of the
+models:</p>
+<pre class="r"><code>model.sel(M1_nb, M2_nb, M3_nb, M4_nb, M5_nb, M6_nb, M7_nb)</code></pre>
+<pre><code>## Model selection table 
+##       (Int) age_at_srv    cnd twe_pca_cnt twe_rsp_pca_onl_cnt
+## M2_nb 5.378 -0.0004166 0.2043                        -0.01368
+## M3_nb 5.614 -0.0009211 0.1876                                
+## M4_nb 5.722 -0.0011170 0.2043                                
+## M6_nb 5.542 -0.0011100 0.1869                                
+## M1_nb 5.575 -0.0011680 0.1795     0.00421                    
+## M5_nb 5.618 -0.0010870 0.1806                                
+## M7_nb 5.566 -0.0010380 0.1794                                
+##       twe_cl_pca_onl_cnt twe_sc_pca_onl_cnt twe_rsp_all_cnt twe_cl_all_cnt
+## M2_nb                                                                     
+## M3_nb           -0.01068                                                  
+## M4_nb                             -0.009345                               
+## M6_nb                                                              0.00427
+## M1_nb                                                                     
+## M5_nb                                             -0.003111               
+## M7_nb                                                                     
+##       twe_sc_all_cnt       family init.theta df   logLik   AICc delta weight
+## M2_nb                NB(1.8406,l)       1.84  5 -733.119 1476.7  0.00  0.319
+## M3_nb                NB(1.8228,l)       1.82  5 -733.791 1478.1  1.34  0.163
+## M4_nb                NB(1.8201,l)       1.82  5 -733.895 1478.3  1.55  0.147
+## M6_nb                NB(1.8091,l)       1.81  5 -734.313 1479.1  2.39  0.097
+## M1_nb                NB(1.8085,l)       1.81  5 -734.336 1479.2  2.43  0.094
+## M5_nb                NB(1.8079,l)       1.81  5 -734.358 1479.2  2.48  0.092
+## M7_nb      -0.001074 NB(1.8064,l)       1.81  5 -734.415 1479.3  2.59  0.087
+## Abbreviations:
+##  family: NB(1.8064,l) = &#39;Negative Binomial(1.8064,log)&#39;, 
+##          NB(1.8079,l) = &#39;Negative Binomial(1.8079,log)&#39;, 
+##          NB(1.8085,l) = &#39;Negative Binomial(1.8085,log)&#39;, 
+##          NB(1.8091,l) = &#39;Negative Binomial(1.8091,log)&#39;, 
+##          NB(1.8201,l) = &#39;Negative Binomial(1.8201,log)&#39;, 
+##          NB(1.8228,l) = &#39;Negative Binomial(1.8228,log)&#39;, 
+##          NB(1.8406,l) = &#39;Negative Binomial(1.8406,log)&#39;
+## Models ranked by AICc(x)</code></pre>
+</div>
 
 
 
