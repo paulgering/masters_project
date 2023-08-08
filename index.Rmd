@@ -13,12 +13,12 @@ library(WebPower) #Conduct power analysis
 Loading the data from the current working directory.
 
 ```{r}
-df <- read.csv(here("data"))
+df <- read.csv(here("SCC_ID_data_blinded_PG"))
 ```
 
 ## Prospective Power Analysis
 
-Conducting a prospective power analysis to determine the sample size that would be required to detect a small/medium effect size. The median of 
+As the baselinerate, the median of infant vocab count will be used to ensure that we have an accurate calculation of the sample size that would have been needed to detect a small/medium effect size. 
 
 ```{r}
 baselinerate = median(df$18m_cdi_vocab_count) #Baseline rate of infant vocab size
