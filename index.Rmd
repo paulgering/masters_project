@@ -1,12 +1,21 @@
+---
+title: "**Analyses for individual differences study**"
+output:
+  html_document: default
+---
+
 ## Loading packages
 
 ```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
+#renv - Store packages and keep account of package versions
 if (!require('renv')) 
 {
   install.packages('renv');
 }
-library(renv) #Store packages and keep account of package versions
+library(renv) 
 renv::restore()
+
+# Load packages
 library(AER) #conduct an overdispersion test on Poisson Models
 library(dplyr) #Preparing the data for analysis
 library(here) #locate files based on current working directory
