@@ -27,25 +27,8 @@ library(WebPower) #Conduct power analysis
 ## Load the data 
 Loading the data from the current working directory.
 
-## Testing the code
 ```{r}
-num_rows <- 125
-
-condition <- sample(0:1, num_rows, replace = TRUE)
-age_at_survey <- sample(503:614, num_rows, replace = TRUE)
-twe_length <- sample(240:300, num_rows, replace = TRUE)
-twe_pca_count <- sample(0:25, num_rows, replace = TRUE)
-twe_sc_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
-twe_cl_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
-twe_responses_pca_only_count <- sample(0:25, num_rows, replace = TRUE)
-twe_sc_all_count <- sample(0:25, num_rows, replace = TRUE)
-twe_cl_all_count <- sample(0:25, num_rows, replace = TRUE)
-twe_responses_all_count <- sample(0:25, num_rows, replace = TRUE)
-sev_cdi_vocab_count <- sample(0:300, num_rows, replace = TRUE)
-
-# Create a data frame with the generated columns
-df <- data.frame(age_at_survey, condition, twe_length, twe_pca_count, twe_sc_pca_only_count, twe_cl_pca_only_count, twe_responses_pca_only_count, twe_sc_all_count, twe_cl_all_count, twe_responses_all_count, sev_cdi_vocab_count)
-
+df <- read.csv(here("SCC_ID_data_blinded_PG"))
 ```
 
 ## Prospective Power Analysis
