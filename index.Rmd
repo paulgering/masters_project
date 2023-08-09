@@ -66,7 +66,7 @@ wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.
 
 ## Preparing the researcher-coded behaviours 
 
-The below code is used to prepare the counts of researcher-coded behaviours prior to incorporating them into Poisson regression models. The code takes the columns that begin with 12 months, which happens to be the columns containing the counts of researcher-coded behaviours (aside from 12m_length), and mutates them using the following steps: 
+The below code is used to prepare the counts of researcher-coded behaviours prior to incorporating them into Poisson regression models. The code takes the columns that begin with "twelve_", which happens to be the columns containing the counts of researcher-coded behaviours (aside from twelve_length), and mutates them using the following steps: 
 1. Adding one to the counts to avoid zero counts 
 2. Prorating the counts by Dividing them by the length of the videos at 12 months and multiplying them by 300 (the maximum length of a video)
 3. Log transforming the counts to reduce skewness
@@ -76,14 +76,14 @@ The below code is used to prepare the counts of researcher-coded behaviours prio
 # Proscaling and log transforming the counts
 df1 <- df %>%
   mutate(across(
-    starts_with("twe_") & !matches("twe_length"),
-    ~ (log(((. + 1) / twe_length) * 300))
+    starts_with("twelve_") & !matches("twelve_length"),
+    ~ (log(((. + 1) / twelve_length) * 300))
   ))
 
 # robust scaling to be done with the log transformed variables 
 df2 <- df1 %>% 
   mutate(across(
-    starts_with("twe_") & !matches('twe_length'),
+    starts_with("twelve_") & !matches('twelve_length'),
     ~ ((. - median(.)) / IQR(.))
   ))
 
@@ -111,7 +111,7 @@ M0 = glm(sev_cdi_vocab_count ~ condition + centered_age, family = poisson, data=
 ### Model 1 - Count of infant 'intentional' Prelinguistic Communicative Acts
 
 ```{r}
-M1 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_pca_count ,family=poisson,data=df2)
+M1 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_pca_count ,family=poisson,data=df2)
 
 summary(M1)
 ```
@@ -119,7 +119,7 @@ summary(M1)
 ### Model 2 - Count of infant 'intentional' Prelinguistic Communicative Acts that elicited a response of any kind
 
 ```{r}
-M2 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_responses_pca_only_count ,family=poisson,data=df2)
+M2 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_responses_pca_only_count ,family=poisson,data=df2)
 
 summary(M2)
 ```
@@ -127,7 +127,7 @@ summary(M2)
 ### Model 3 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a content-light response
 
 ```{r}
-M3 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_cl_pca_only_count ,family=poisson,data=df2)
+M3 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_cl_pca_only_count ,family=poisson,data=df2)
 
 summary(M3)
 ```
@@ -135,7 +135,7 @@ summary(M3)
 ### Model 4 - Count of infant 'intentional Prelinguistic Communicative Acts that elicited a semantically contingent response
 
 ```{r}
-M4 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_sc_pca_only_count ,family=poisson,data=df2)
+M4 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_sc_pca_only_count ,family=poisson,data=df2)
 
 
 summary(M4)
@@ -144,7 +144,7 @@ summary(M4)
 ### Model 5 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a response of any kind
 
 ```{r}
-M5 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_responses_all_count ,family=poisson,data=df2)
+M5 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_responses_all_count ,family=poisson,data=df2)
 
 summary(M5)
 ```
@@ -152,7 +152,7 @@ summary(M5)
 ### Model 6 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a content-light response
 
 ```{r}
-M6 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_cl_all_count ,family=poisson,data=df2)
+M6 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_cl_all_count ,family=poisson,data=df2)
 
 summary(M6)
 ```
@@ -160,7 +160,7 @@ summary(M6)
 ### Model 7 - A count of (infant 'intentional Prelinguistic Communicative Acts + non-gaze-coordinated vocalisations) that elicited a semantically contingent response
 
 ```{r}
-M7 = glm(sev_cdi_vocab_count ~ condition + centered_age + twe_sc_all_count ,family=poisson,data=df2)
+M7 = glm(sev_cdi_vocab_count ~ condition + centered_age + twelve_sc_all_count ,family=poisson,data=df2)
 
 summary(M7)
 ```
@@ -189,44 +189,44 @@ summary(M0_nb)
 ```
 
 ```{r}
-M1_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_pca_count,data=df2)
+M1_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_pca_count,data=df2)
 
 summary(M1_nb)
 ```
 
 ```{r}
-M2_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_responses_pca_only_count,data=df2)
+M2_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_responses_pca_only_count,data=df2)
 
 summary(M2_nb)
 ```
 
 ```{r}
-M3_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_cl_pca_only_count,data=df2)
+M3_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_cl_pca_only_count,data=df2)
 
 summary(M3_nb)
 ```
 
 ```{r}
-M4_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_sc_pca_only_count,data=df2)
+M4_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_sc_pca_only_count,data=df2)
 
 
 summary(M4_nb)
 ```
 
 ```{r}
-M5_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_responses_all_count,data=df2)
+M5_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_responses_all_count,data=df2)
 
 summary(M5_nb)
 ```
 
 ```{r}
-M6_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_cl_all_count,data=df2)
+M6_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_cl_all_count,data=df2)
 
 summary(M6_nb)
 ```
 
 ```{r}
-M7_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twe_sc_all_count,data=df2)
+M7_nb = glm.nb(sev_cdi_vocab_count ~ condition + centered_age + twelve_sc_all_count,data=df2)
 
 summary(M7_nb)
 ```
