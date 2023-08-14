@@ -1,0 +1,78 @@
+DESCRIPTION OF DATA:
+SCC_ID_data_blinded_PG - 
+contains data for the 125 participants (out of 435 in the wider RCT) who provided video recordings of them engaging in unstructured play with their 12-months-old infant. The video recordings were coded for infant communicative behaviours and caregiver responses to these behaviours. When the infants were 17-months-old, caregivers were asked to fill out a questionnaire relating to their infants vocabulary production. The researcher-coded data as well as the data from the caregiver questionaires have been added to this table.
+  **participant** 
+     Variable type: numeric
+     Description: the participant ID number.
+  **caregiver_education** 
+     Variable type: binary 
+     Description: the primary caregivers level of education (0 = has not completed an Undergraduate degree, 1 = Has completed atleast an Undergraduate degree).
+  **age_at_survey** 
+     Variable type: binary 
+     Description: infant age at which vocab count was recorded.
+  **condition**
+     Variable type: binary
+     Description: the condition allocation.
+  **twelve_length** 
+     Variable type: numeric 
+     Description: the final length of the 12-month video recording from which data was extracted (minimum 240 seconds, maximum 300 seconds).
+  **twelve_pca_1** 
+     Variable type: count 
+     Description: coder 1's count of infant prelinguistic communicative acts (PCAs) (the total count of infant gaze-coordinated vocalisations, showing, giving and index finger point gestures) from the 12-month videos (0 or higher).
+  **twelve_pca_2**
+     Variable type: count 
+     Description: coder 2's count of infant PCAs from the 12-month video (0 or higher).
+  **twelve_pca_count** 
+     Variable type: count
+     Description: the final count of the infant PCAs from the 12-month video (0 or higher).
+  **twelve_sc_pca_only_1** 
+     Variable type: count
+     Description: coder 1's count of caregivers semantically contingent responses to infant PCAs from the 12-month videos (0 or higher).
+  **twelve_sc_pca_only_2**
+     Variable type: count 
+     Description: coder 2's count of caregivers semantically contingent responses to infant PCAs from the 12-month videos (0 or higher).
+  **twelve_sc_pca_only_count** 
+     Variable type: count
+     Description: the final count of the caregivers semantically contingent responses to the infant's PCAs from the 12-month videos (0 or higher).
+  **twelve_sc_all_1**
+     Variable type: count
+     Description: coder 1's count of caregivers semantically contingent responses to infant PCAs  and non-gaze coordinated vocalisations from the 12-month videos (0 or higher).
+  **twelve_sc_all_2**
+     Variable type: count
+     Description: coder 2's count of caregivers semantically contingent responses to infant PCAs  and non-gaze coordinated vocalisations from the 12-month videos (0 or higher).
+  **twelve_sc_all_count**
+     Variable type: count
+     Description: the final count of the caregivers semantically contingent responses to the infant's PCAs and non-gaze-coordinated vocalisations from the 12-month videos (0 or higher).
+  **twelve_cl_pca_only_1**
+     Variable type: count
+     Description: coder 1's count of caregivers content-light responses  (imitiative vocal responses or other vocal responses) to infant PCAs from the 12-month videos (0 or higher).
+  **twelve_cl_pca_only_2**
+     Variable type: count
+     Description: coder 2's count of caregivers content-light responses to infant PCAs from the 12-month videos (0 or higher).
+  **twelve_cl_pca_only_count**
+     Variable type: count
+     Description: the final count of the caregivers content-light responses to the infant's PCAs from the 12-month videos (0 or higher).
+  **twelve_cl_all_count**
+     Variable type: count
+     Description: the count of the caregivers content-light responses to the infant's PCAs and non-gaze-coordinated vocalisations from the 12-month videos (0 or higher).
+  **twelve_responses_pca_only_count**
+     Variable type: count
+     Description: the count of the caregivers responses to the infant's PCAs from the 12-month videos (0 or higher).
+  **twelve_responses_all_count**
+     Variable type: count
+     Description: the count of the caregivers responses to the infant's PCAs and non-gaze-coordinated vocalisations from the 12-month videos (0 or higher).
+  **seventeen_length** 
+     Variable type: numeric
+     Description: the final length of the 17-month video recording from which data was extracted (minimum 240 seconds, maximum 300 seconds).
+  **seventeen_vid_vocab_1**
+     Variable type: count
+     Description: coder 1's count of infant word tokens from the 17-month videos (0 or higher).
+  **seventeen_vid_vocab_2**
+     Variable type: count
+     Description: coder 2's count of infant word tokens from the 17-month videos (0 or higher).
+  **seventeen_vid_vocab_count**
+     Variable type: count
+     Description: the final count of infant word tokens from the 17-month videos (0 or higher).
+  **seventeen_cdi_vocab_count** 
+     Variable type: count
+     Description: the final count of infant word tokens from the caregiver report (CDI) questionaire.
