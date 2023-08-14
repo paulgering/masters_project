@@ -24,6 +24,7 @@ library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(WebPower) #Conduct power analysis
 library(psych) #Conduct the reliability check
 library(iccCounts) #Conduct the reliability check
+library(tidyverse)
 ```
 
 ## Load the data 
@@ -271,6 +272,32 @@ If overdispersion is detected for model 1 and the null model:
 anova(M1_nb, M0_nb)
 ```
 
+```{r}
+df3 <- df2 %>% 
+  drop_na(seventeen_cdi_vocab_count)
+df4 <- df3 %>%
+  mutate(predicted_M0_nb = predict(M0_nb, type = "response"),
+         predicted_M1_nb = predict(M1_nb, type = "response"))
+
+# Create a scatterplot comparing observed vs. predicted values for both models
+plot <- ggplot(df4, aes(x = seventeen_cdi_vocab_count, y = predicted_M0_nb)) +
+  geom_point(color = "blue", alpha = 0.5, size = 3) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  geom_point(aes(y = predicted_M1_nb), color = "red", alpha = 0.5, size = 3) +
+  labs(title = "Comparison of Fit between Nested Poisson Regression Models",
+       x = "Observed y",
+       y = "Predicted y") +
+  scale_x_continuous(limits = c(0, max(df4$seventeen_cdi_vocab_count))) +
+  scale_y_continuous(limits = c(0, max(c(df4$Predicted_M0_nb, df4$Predicted_M1_nb)))) +
+  theme_minimal()
+
+# Display the plot
+print(plot)
+```
+
+
+
+
 ## Comparing the AIC of the models to test predictions 2, 3, and 4 and to answer two questions in an exploratory analysis:
 
 ```{r}
@@ -282,3 +309,95 @@ Alternative code in case overdispersion is detected in all of the models:
 ```{r}
 model.sel(M1_nb, M2_nb, M3_nb, M4_nb, M5_nb, M6_nb, M7_nb)
 ```
+
+Preparing the data for visualisation
+```{r}
+# Model 1 - infant PCAs
+CIs=confint(M1_nb)
+vocab_for_median_of_pca=exp(M1_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_pca = exp(M1_nb$coefficients[1]+M1_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_pca_lb = exp(M1_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_pca_ub = exp(M1_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_pca_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_pca_ub)
+
+# Model 2 - infant PCAs with response
+CIs=confint(M2_nb)
+vocab_for_median_of_responses_pca=exp(M2_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_responses_pca = exp(M2_nb$coefficients[1]+M2_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_responses_pca_lb = exp(M2_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_responses_pca_ub = exp(M2_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_responses_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_responses_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_responses_pca_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_responses_pca_ub)
+
+# Model 3 - infant PCAs with content-light
+CIs=confint(M3_nb)
+vocab_for_median_of_cl_pca=exp(M3_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_cl_pca = exp(M3_nb$coefficients[1]+M3_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_cl_pca_lb = exp(M3_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_cl_pca_ub = exp(M3_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_cl_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_cl_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_cl_pca_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_cl_pca_ub)
+
+# Model 4 - infant PCAs with semantically contingent response
+CIs=confint(M4_nb)
+vocab_for_median_of_sc_pca=exp(M4_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_sc_pca = exp(M4_nb$coefficients[1]+M4_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_sc_pca_lb = exp(M4_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_sc_pca_ub = exp(M4_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_sc_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_sc_pca)
+print(Estimated_vocab_for_1_IQR_above_median_of_sc_pca_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_sc_pca_ub)
+
+# Model 5 - any infant behaviour with response
+CIs=confint(M5_nb)
+vocab_for_median_of_responses_all=exp(M5_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_responses_all = exp(M5_nb$coefficients[1]+M5_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_responses_all_lb = exp(M5_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_responses_all_ub = exp(M5_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_responses_all)
+print(Estimated_vocab_for_1_IQR_above_median_of_responses_all)
+print(Estimated_vocab_for_1_IQR_above_median_of_responses_all_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_responses_all_ub)
+
+# Model 6 - any infant behaviour with content-light
+CIs=confint(M2_nb)
+vocab_for_median_of_cl_all=exp(M6_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_cl_all = exp(M6_nb$coefficients[1]+M6_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_cl_all_lb = exp(M6_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_cl_all_ub = exp(M6_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_cl_all)
+print(Estimated_vocab_for_1_IQR_above_median_of_cl_all)
+print(Estimated_vocab_for_1_IQR_above_median_of_cl_all_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_cl_all_ub)
+
+# Model 7 - any infant behaviour with semantically contingent response
+CIs=confint(M7_nb)
+vocab_for_median_of_sc_all=exp(M7_nb$coefficients[1])
+Estimated_vocab_for_1_IQR_above_median_of_sc_all = exp(M7_nb$coefficients[1]+M7_nb$coefficients[4])
+Estimated_vocab_for_1_IQR_above_median_of_sc_all_lb = exp(M7_nb$coefficients[1]+CIs[4])
+Estimated_vocab_for_1_IQR_above_median_of_sc_all_ub = exp(M7_nb$coefficients[1]+CIs[8])
+
+print(vocab_for_median_of_sc_all)
+print(Estimated_vocab_for_1_IQR_above_median_of_sc_all)
+print(Estimated_vocab_for_1_IQR_above_median_of_sc_all_lb)
+print(Estimated_vocab_for_1_IQR_above_median_of_sc_all_ub)
+
+```
+
+
+
+
