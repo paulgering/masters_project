@@ -99,6 +99,33 @@ df2$condition <- df2$condition - 0.5
 df2$centered_age <- scale(df2$age_at_survey, center = TRUE, scale = FALSE)
 ```
 
+## Reliability check 
+
+```{r}
+#PCA only reliability, SC responses
+Coder1=data.frame(cbind(df$participant,df$twelve_sc_pca_only_1,rep(1,length(df$participant))))
+names(Coder1) <- c("id","y","met")
+
+Coder2=data.frame(cbind(df$participant,df$twelve_sc_pca_only_2,rep(2,length(df$participant))))
+names(Coder2) <- c("id","y","met")
+
+for_icc=data.frame(rbind(Coder1,Coder2))
+ICC(icc_counts(for_icc,y="y",id="id",met="met",type="con"))
+
+#PCA only reliability, CL responses
+Coder1=data.frame(cbind(df$participant,df$twelve_cl_pca_only_1,rep(1,length(df$participant))))
+names(Coder1) <- c("id","y","met")
+
+Coder2=data.frame(cbind(df$participant,df$twelve_cl_pca_only_2,rep(2,length(df$participant))))
+names(Coder2) <- c("id","y","met")
+
+for_icc=data.frame(rbind(Coder1,Coder2))
+ICC(icc_counts(for_icc,y="y",id="id",met="met",type="con"))
+
+```
+
+
+
 ## Fitting the models to a Poisson Distribution
 Building the models using poisson regressions. 
 
@@ -231,7 +258,7 @@ M7_nb = glm.nb(seventeen_cdi_vocab_count ~ condition + centered_age + twelve_sc_
 summary(M7_nb)
 ```
 
-## Testing Prediction 1: Infants who produce more PCA's will have a alrger vocabulary size at 18 months 
+## Testing Prediction 1: Infants who produce more PCA's will have a larger vocabulary size at 18 months 
 
 ```{r}
 anova(M1, M0)
