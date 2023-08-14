@@ -22,13 +22,15 @@ library(here) #locate files based on current working directory
 library(MASS) #Fit negative binomial regression
 library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(WebPower) #Conduct power analysis
+library(psych)
+library(iccCounts)
 ```
 
 ## Load the data 
 Loading the data from the current working directory.
 
 ```{r}
-df <- read.csv(here("SCC_ID_data_blinded_PG"))
+df <- read.csv(here("raw", "SCC_ID_data_UNBLINDED_stage1.csv"))
 ```
 
 ## Prospective Power Analysis
@@ -36,7 +38,7 @@ df <- read.csv(here("SCC_ID_data_blinded_PG"))
 As the baselinerate, the median of infant vocab count will be used to ensure that we have an accurate calculation of the sample size that would have been needed to detect a small/medium effect size. 
 
 ```{r}
-baselinerate = median(df$seventeen_cdi_vocab_count) #Baseline rate of infant vocab size
+baselinerate = median(df$seventeen_cdi_vocab_count, na.rm = TRUE) #Baseline rate of infant vocab size
 
 #Small effect size
 
@@ -89,12 +91,9 @@ df2 <- df1 %>%
 
 ```
 
-## Centering the control variables condition around 0
+## Centering age around the mean
 
 ```{r}
-# Centering condition around 0
-df2$condition <- df2$condition - 0.5
-
 # Centering age around the mean 
 df2$centered_age <- scale(df2$age_at_survey, center = TRUE, scale = FALSE)
 ```
