@@ -22,8 +22,8 @@ library(here) #locate files based on current working directory
 library(MASS) #Fit negative binomial regression
 library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
 library(WebPower) #Conduct power analysis
-library(psych)
-library(iccCounts)
+library(psych) #Conduct the reliability check
+library(iccCounts) #Conduct the reliability check
 ```
 
 ## Load the data 
