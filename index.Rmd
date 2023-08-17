@@ -25,6 +25,7 @@ library(WebPower) #Conduct power analysis
 library(psych) #Conduct the reliability check
 library(iccCounts) #Conduct the reliability check
 library(tidyverse)
+library(pastecs)
 ```
 
 ## Load the data 
@@ -32,6 +33,7 @@ Loading the data from the current working directory.
 
 ```{r}
 df <- read.csv(here("raw", "SCC_ID_data_UNBLINDED_stage1.csv"))
+stat.desc(df)
 ```
 
 ## Prospective Power Analysis
