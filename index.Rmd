@@ -359,7 +359,7 @@ p <- ggplot(data = my_table1, aes(x = reorder(variable, IQR_above_median),
   geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
   geom_pointrange() + 
   coord_flip() + 
-  labs(x = NULL, y = "Change in vocabulary size per 1 SD increase from the median in the predictor") 
+  labs(x = NULL, y = "Change in vocabulary size per 1 SD increase from the median in the predictor") + theme(axis.title.x = element_text(size = 10)) 
 
 p
 
