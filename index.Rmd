@@ -354,12 +354,14 @@ my_table1 <- my_table %>%
     upper = upper - median
   )
 
+str(my_table1)
+
 p <- ggplot(data = my_table1, aes(x = reorder(variable, IQR_above_median),
-                              y = IQR_above_median, ymin = lower, ymax = upper)) + 
+                              y = IQR_above_median, ymin = lower, ymax = upper)) + scale_y_continuous(breaks = seq(-20, 70, by = 10)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
   geom_pointrange() + 
   coord_flip() + 
-  labs(x = NULL, y = "Change in vocabulary size per 1 SD increase from the median in the predictor") + theme(axis.title.x = element_text(size = 10)) 
+  labs(x = NULL, y = "Change in vocabulary size per 1 SD increase from the median in the predictor") + theme(axis.title.x = element_text(size = 10, margin = margin(t = 15)), plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "inches"))
 
 p
 
