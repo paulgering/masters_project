@@ -286,7 +286,15 @@ Alternative code in case overdispersion is detected in all of the models:
 model.sel(M1_nb, M2_nb, M3_nb, M4_nb, M5_nb, M6_nb, M7_nb)
 ```
 
-Preparing the data for visualisation
+## Comparing the fit of model 2 and the null model 
+Given that model 2 was a marginal improvement in fit on model 1, it was decided that the fit of model 2 would be compared to the null model to determine whether including infant PCAs + response in the model significantly improved the amount of variance explained in infant vocabulary size. 
+
+```{r}
+anova(M2_nb, M0_nb)
+```
+
+## Preparing the data for visualisation
+
 ```{r}
 # Model 1 - infant PCAs
 CIs=confint(M1_nb)
