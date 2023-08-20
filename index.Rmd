@@ -369,13 +369,11 @@ p <- ggplot(data = my_table1, aes(x = reorder(variable, IQR_above_median),
   geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
   geom_pointrange() + 
   coord_flip() + 
-  labs(x = NULL, y = "Change in vocabulary size per 1 SD increase from the median in the predictor") + theme(axis.title.x = element_text(size = 10, margin = margin(t = 15)), plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "inches"))
+  labs(x = "Caregiver-infant dyadic sequences (predictors)", y = "Change in vocabulary size per 1 SD increase from the median in the predictor", title = "The effects of caregiver-infant dyadic sequences on infant vocabulary size") + 
+  theme(axis.title.x = element_text(size = 10, margin = margin(t = 15)), plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "inches"), plot.title = element_text(size = 12, hjust = 0.63))
 
 p
 
 ggsave(here("figs", "plot.png"), plot = p)
 ```
-
-
-
 
