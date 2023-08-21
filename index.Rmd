@@ -17,28 +17,31 @@ renv::restore()
 
 # Load packages
 library(AER) #conduct an overdispersion test on Poisson Models
-library(dplyr) #Preparing the data for analysis
 library(here) #locate files based on current working directory
 library(MASS) #Fit negative binomial regression
 library(MuMIn) #Calculate the Akaike Information Criterion (AIC) for each model
+library(pastecs) # Provides useful descriptive statistics
+library(tidyverse) #Data analysis, management, and visualisation 
 library(WebPower) #Conduct power analysis
 library(psych) #Conduct the reliability check
 library(iccCounts) #Conduct the reliability check
-library(tidyverse)
-library(pastecs)
 ```
 
 ## Load the data 
-Loading the data from the current working directory.
+Loading the data from the current working directory. 
 
-```{r}
+PLEASE NOTE: The csv file in the R code ("SCC_ID_data_UNBLINDED_stage1.csv") is different from the csv file uploaded to Github ("SCC_ID_data_blinded_stage1.csv"). The unblinded dataset was not shared via Github as it contained data relating to participant condition. Openly sharing this data would risk unblinding research assistants who are working on the full RCT which this project is using data from. Therefore, the blinded dataset (without participant condition) is shared instead.
+
+```{r, results = 'hide', warning = FALSE, message = FALSE}
+# Load the dataset
 df <- read.csv(here("raw", "SCC_ID_data_UNBLINDED_stage1.csv"))
-stat.desc(df)
+
+stat.desc(df) #provides descriptive statistics for variables in dataset
 ```
 
 ## Prospective Power Analysis
 
-As the baselinerate, the median of infant vocab count will be used to ensure that we have an accurate calculation of the sample size that would have been needed to detect a small/medium effect size. 
+A prospective power analysis was conducted to determine whether the sample size of this study was sufficient to detect a small-medium effect size. The median of "seventeen_cdi_vocab_count" is used as the baseline rate to ensure that we have an accurate calculation of the sample size that would have been needed to detect a small/medium effect size. 
 
 ```{r}
 baselinerate = median(df$seventeen_cdi_vocab_count, na.rm = TRUE) #Baseline rate of infant vocab size
@@ -47,11 +50,15 @@ baselinerate = median(df$seventeen_cdi_vocab_count, na.rm = TRUE) #Baseline rate
 
 d=0.2
 
+# Calculating the expected slope based on an effect size of 0.2
+
 lo=d*(pi/sqrt(3)) 
 
 increase = exp(lo)
 
-slope=(baselinerate+increase)/baselinerate #Calculating the expected slope based on an effect size of 0.2
+slope=(baselinerate+increase)/baselinerate 
+
+# Conducting the power analysis with 80% power and 0.2 effect size
 
 wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = "Bernoulli", alternative="greater")
 
@@ -59,11 +66,15 @@ wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.
 
 d=0.5
 
+# Calculating the expected slope based on an effect size of 0.5
+
 lo=d*(pi/sqrt(3)) 
 
 increase = exp(lo)
 
-slope=(baselinerate+increase)/baselinerate # Calculating the expected slope based on an effect size of 0.5
+slope=(baselinerate+increase)/baselinerate
+
+# Conducting the power analysis with 80% power and 0.5 effect size
 
 wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.8, family = "Bernoulli", alternative="greater")
 
@@ -112,7 +123,7 @@ Coder2=data.frame(cbind(df$participant,df$twelve_sc_pca_only_2,rep(2,length(df$p
 names(Coder2) <- c("id","y","met")
 
 for_icc=data.frame(rbind(Coder1,Coder2))
-ICC(icc_counts(for_icc,y="y",id="id",met="met",type="con"))
+ICC(icc_counts(data = for_icc,y="y",id="id",met="met",type="con"))
 
 #PCA only reliability, CL responses
 Coder1=data.frame(cbind(df$participant,df$twelve_cl_pca_only_1,rep(1,length(df$participant))))
@@ -127,9 +138,8 @@ ICC(icc_counts(for_icc,y="y",id="id",met="met",type="con"))
 ```
 
 
-
 ## Fitting the models to a Poisson Distribution
-Building the models using poisson regressions. 
+Building the models using poisson regressions. Each model contains infant vocabulary size at 17 months as an outcome variable ('seventeen_cdi_vocab_count') and condition and centered age as control variables. Aside from the null model (M0), each model also contains a predictor variable representing the total number of times a dyadic combination of an infant behaviour and caregiver response occurred (e.g., "twelve_pca_count").
 
 ### Model 0 - Null Model 
 
@@ -208,7 +218,7 @@ dispersiontest(M6)
 dispersiontest(M7)
 ```
 
-## fitting the models to a Negative Binomial regression
+## Fitting the models to a Negative Binomial regression
 If any of the dispersion tests has p < 0.05, a negative binomial regression will be fitted instead and this should be reported instead.
 
 ```{r}
@@ -287,21 +297,38 @@ model.sel(M1_nb, M2_nb, M3_nb, M4_nb, M5_nb, M6_nb, M7_nb)
 ```
 
 ## Comparing the fit of model 2 and the null model 
-Given that model 2 was a marginal improvement in fit on model 1, it was decided that the fit of model 2 would be compared to the null model to determine whether including infant PCAs + response in the model significantly improved the amount of variance explained in infant vocabulary size. 
+Given that model 2 was a marginal improvement in fit on model 1, it was decided that the fit of model 2 would be compared to the null model using a likelihood ratio test. The aim was to determine whether including infant PCAs + response in the model significantly improved the amount of variance explained in infant vocabulary size. 
 
 ```{r}
 anova(M2_nb, M0_nb)
 ```
 
-## Preparing the data for visualisation
+# Visualisation
 
-```{r}
+## Preparing the data for visualisation
+I decided to visualise the effect sizes of each of the predictor variables (each combination of infant prelinguistic behaviour and caregiver response) on infant vocabulary size. 
+
+To do so, I calculated the following for each of the constructed models aside for the null model (M1 to M7): 
+   1. The vocabulary size of the infant with a median score on the predictor variable
+   2. The vocabulary size of the infant with a score on the predictor variable one inter-quartile range (IQR) above the median 
+   3. The lower bound of number 2. 
+   4. The upper bound of number 2.
+
+To make these calculations, I extracted the following values from each model: 
+   a. The regression coefficients for the intercept and the predictor variable
+   b. Lower and upper bound of the confidence interval for each predictor variable 
+
+The exp() function is used below to calculate exponential values for the coefficients extracted from the models. This will ensure that the graph presents data in meaningful units (i.e. the number of words infants produced within a five minute video).
+
+The below code was written following pre-registration and running the data analysis. Since overdispersion was detected in each of the Poisson Regression models, the below code only uses the models that were fitted using a negative binomial regression.
+
+```{r, warning = FALSE, message = FALSE}
 # Model 1 - infant PCAs
-CIs=confint(M1_nb)
-vocab_median_pca=exp(M1_nb$coefficients[1])
-vocab_1_IQR_above_median_pca = exp(M1_nb$coefficients[1]+M1_nb$coefficients[4])
-vocab_1_IQR_above_median_pca_lb = exp(M1_nb$coefficients[1]+CIs[4])
-vocab_1_IQR_above_median_pca_ub = exp(M1_nb$coefficients[1]+CIs[8])
+CIs=confint(M1_nb) #Calculating 95% confidence interval for the variables in model 1
+vocab_median_pca=exp(M1_nb$coefficients[1]) #Calculating vocab size of infant with median on predictor (infant PCAs)
+vocab_1_IQR_above_median_pca = exp(M1_nb$coefficients[1]+M1_nb$coefficients[4]) #Calculating vocab size of infant one IQR above the median on predictor 
+vocab_1_IQR_above_median_pca_lb = exp(M1_nb$coefficients[1]+CIs[4]) #Calculating lower bound
+vocab_1_IQR_above_median_pca_ub = exp(M1_nb$coefficients[1]+CIs[8]) #Calculating upper bound
 
 # Model 2 - infant PCAs with response
 CIs=confint(M2_nb)
@@ -345,6 +372,16 @@ vocab_1_IQR_above_median_sc_all = exp(M7_nb$coefficients[1]+M7_nb$coefficients[4
 vocab_1_IQR_above_median_sc_all_lb = exp(M7_nb$coefficients[1]+CIs[4])
 vocab_1_IQR_above_median_sc_all_ub = exp(M7_nb$coefficients[1]+CIs[8])
 
+```
+
+The values that were calculated above are added to a dataframe (using the my_table function) with the following columns: 
+    Variable - the name of the predictor variable with the model in brackets
+    Median - the vocabulary size score for the infant with the median score on the predictor
+    IQR_above_median - The vocabulary size of the infant with a score on the predictor variable one inter quartile range above the median
+    Lower - the lower bound of IQR_above_median with a 95% confidence interval
+    Upper - the upper bound of IQR_above_median with a 95% confidence interval
+
+```{r}
 my_table <- data.frame(
   Column1 = c("PCA (M1)", "PCA + response (M2)", "PCA + CL response (M3)", "PCA + SC response (M4)", "PCA + vocs + response (M5)", "PCA + vocs + CL response (M6)", "PCA + vocs + SL response (M7)"), 
   Column2 = c(vocab_median_pca, vocab_median_responses_pca, vocab_median_cl_pca, vocab_median_sc_pca, vocab_median_responses_all, vocab_median_cl_all, vocab_median_sc_all), 
@@ -355,22 +392,40 @@ my_table <- data.frame(
 
 colnames(my_table) <- c("variable", "median", "IQR_above_median", "lower", "upper")
 
+```
+
+The table was mutated so that the median column was subtracted from the following columns: IQR_above_median, lower, and upper. This ensures that the values in these columns are centred around 0. Therefore, the value in the IQR_above_median column now denote the change in vocabulary size per 1IQR increase from the median in the predictor. This will facilitate comparison between the effects of each of the predictor variables on the outcome variable. 
+
+```{r}
 my_table1 <- my_table %>%
   mutate(
     IQR_above_median = IQR_above_median - median, 
     lower = lower - median, 
     upper = upper - median
   )
+```
 
-str(my_table1)
+## Visualising the data
+The values in the data frame "my_table1" were plotted in a similar format to a box plot. The variable names are on the x axis and the lower bound, IQR_above_median (which acts as the median), and upper bound are on the y axis. The variables are ordered according to the values in the IQR_above_median. 
 
-p <- ggplot(data = my_table1, aes(x = reorder(variable, IQR_above_median),
-                              y = IQR_above_median, ymin = lower, ymax = upper)) + scale_y_continuous(breaks = seq(-20, 70, by = 10)) +
+The purpose of this graph was to make it easy to compare the effect sizes of each of the predictor variables on infant vocabulary size. 
+
+Donnellan et al. (2020) created a similar graph for their exploratory study, which this study is building upon. I thought it would be appropriate to create a similar graph to theirs to make it easy to compare the effect sizes found in this study to those found in Donnellan et al. (2020). 
+
+```{r}
+p <- ggplot(data = my_table1, 
+            aes(x = reorder(variable, IQR_above_median),
+                y = IQR_above_median, ymin = lower, ymax = upper)) + 
+  scale_y_continuous(breaks = seq(-20, 70, by = 10)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
   geom_pointrange() + 
   coord_flip() + 
-  labs(x = "Caregiver-infant dyadic sequences (predictors)", y = "Change in vocabulary size per 1 SD increase from the median in the predictor", title = "The effects of caregiver-infant dyadic sequences on infant vocabulary size") + 
-  theme(axis.title.x = element_text(size = 10, margin = margin(t = 15)), plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "inches"), plot.title = element_text(size = 12, hjust = 0.68))
+  labs(x = "Caregiver-infant dyadic sequences (predictors)",
+       y = "Change in vocabulary size per 1 SD increase from the median in the predictor",
+       title = "The effects of caregiver-infant dyadic sequences on infant vocabulary size") + 
+  theme(axis.title.x = element_text(size = 10, margin = margin(t = 15)), 
+        plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "inches"), 
+        plot.title = element_text(size = 12, hjust = 0.68))
 
 p
 
