@@ -1,4 +1,4 @@
-# Predicting Early Vocabulary Development from Infant Prelinguistic Communication and Caregiver Responses.  
+# Predicting Early Vocabulary Development from Infant Prelinguistic Communication and Caregiver Responses  
 PSY_6009 masters project page: <https://paulgering.github.io/masters_project/>. 
 
 This github project shares the code that was used to manage, analyse and visualise data from a study investigating the predictive value of infant prelinguistic communication and caregiver responses for early vocabulary development. This project is part of a wider randomised controlled trial (RCT) investigating the effectiveness of the "BBC Tiny Happy People Programme" as an online parent-focused intervention.
