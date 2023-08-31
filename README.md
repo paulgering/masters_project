@@ -1,9 +1,7 @@
-# Masters project - Analysis and visualisation code 
+# Predicting Early Vocabulary Development from Infant Prelinguistic Communication and Caregiver Responses.  
 PSY_6009 masters project page: <https://paulgering.github.io/masters_project/>. 
 
-This github project shares the code that was used to manage, analyse and visualise data from a study investigating the predictive value of infant prelinguistic communication and caregiver responses for early vocabulary development. This project is part of a wider randomised controlled trial investigating the effectiveness of the "BBC Tiny Happy People Programme" as an online parent-focused intervention.
-
-The title of the project is "Predicting early vocabulary development from infant prelinguistic communication and caregiver responses". 
+This github project shares the code that was used to manage, analyse and visualise data from a study investigating the predictive value of infant prelinguistic communication and caregiver responses for early vocabulary development. This project is part of a wider randomised controlled trial (RCT) investigating the effectiveness of the "BBC Tiny Happy People Programme" as an online parent-focused intervention.
 
 The full RCT was pre-registrered on the Open Science Framework (OSF) (<https://osf.io/kme68/>) and ClinicalTrials.gov (NCT04919343), and a paper has been submitted for publication analysing the 12-month data from this RCT (Salter et al., submitted). This project was pre-registered on the OSF (<https://osf.io/t4r3u>). These sources provide further information relating to this project and the full RCT. 
 
