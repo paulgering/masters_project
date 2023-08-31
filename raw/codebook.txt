@@ -1,6 +1,6 @@
 DESCRIPTION OF DATA:
-SCC_ID_data_blinded_PG - 
-contains data for the 125 participants (out of 435 in the wider RCT) who provided video recordings of them engaging in unstructured play with their 12-months-old infant. The video recordings were coded for infant communicative behaviours and caregiver responses to these behaviours. When the infants were 17-months-old, caregivers were asked to fill out a questionnaire relating to their infants vocabulary production. The researcher-coded data as well as the data from the caregiver questionaires have been added to this table.
+SCC_ID_data_UNBLINDED_stage1 - 
+contains data for the 125 participants (out of 435 in the wider RCT) who provided video recordings of them engaging in unstructured play with their 12-months-old infant. The video recordings were coded for infant communicative behaviours and caregiver responses to these behaviours. When the infants were 17-months-old, caregivers were asked to fill out a questionnaire relating to their infants vocabulary production. The researcher-coded data as well as the data from the caregiver questionaires have been added to this table. Please note that some of these variables were not used in the analysis and do not appear in the SCC_ID_data_blinded_stage1 dataset (which contains all the variables used in the analysis aside from condition. 
   **participant** 
      Variable type: numeric
      Description: the participant ID number.
