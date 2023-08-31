@@ -456,3 +456,7 @@ p
 ggsave(here("figs", "plot.png"), plot = p) #Saving the plot as a PNG
 ```
 
+### References 
+Donnellan, E., Bannard, C., McGillion, M. L., Slocombe, K. E., & Matthews, D. (2020). Infants’ intentionally communicative vocalizations elicit responses from caregivers and are the best predictors of the transition to language: A longitudinal investigation of infants’ vocalizations, gestures and word production. Developmental Science, 23(1), e12843. https://doi.org/10.1111/desc.12843
+
+Repo: https://github.com/paulgering/masters_project
