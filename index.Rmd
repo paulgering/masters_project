@@ -5,12 +5,18 @@ output:
 ---
 # Introduction
 ## Project Aim
-This project analyses and visualises data as part of a postgraduate dissertation investigating whether infant vocabulary size at 17 months can be predicted from infant prelinguistic communication and caregiver responses at 12 months (<https://osf.io/t4r3u>). The 12-month data was coded from 5-minute video recordings of caregiver-infant interactions at home. Infant vocabulary size data was collected from parent responses to the MacArthur Communicative Development Inventories (CDI). The 12-month data was collected from 125 families, 122 of which provided responses to the MacArthur CDI at 17 months. These families were  part of a wider RCT investigating the effectiveness of an online parent-focused intervention using resources from the BBC's Tiny Happy People Programme (<https://osf.io/kme68/>).
+This project is part of a postgraduate dissertation investigating whether infant vocabulary size at 17 months can be predicted from infant prelinguistic communication and caregiver responses at 12 months (<https://osf.io/t4r3u>).
+
+The 12-month data was coded from 5-minute video recordings of caregiver-infant interactions at home. Infant vocabulary size data was collected from parent responses to the MacArthur Communicative Development Inventories (CDI). The 12-month data was collected from 125 families, 122 of which provided responses to the MacArthur CDI at 17 months. These families were  part of a wider RCT investigating the effectiveness of an online parent-focused intervention using resources from the BBC's Tiny Happy People Programme (<https://osf.io/kme68/>).
+
+This project builds on an exploratory study by Donnellan et al. (2020), who found that the combination of gaze-coordinated gestures and a prompt and appropriate caregiver response at 12 months is a strong predictor of infant vocabulary size at 17 months. The researchers found that infant gesturing including showing, giving and index finger pointing were also strong predictors of vocabulary size. 
+
 
 ## Project Organisation 
 The /raw folder contains the raw data used for this project and /figs contains the figures produced from this project.
 
 A codebook can be found in the /raw folder, which describes the dataset that is used for this project. 
+
 
 ## Loading packages
 
@@ -492,4 +498,6 @@ ggsave(here("figs", "plot.png"), plot = p) #Saving the plot as a PNG
 ### References 
 Donnellan, E., Bannard, C., McGillion, M. L., Slocombe, K. E., & Matthews, D. (2020). Infants’ intentionally communicative vocalizations elicit responses from caregivers and are the best predictors of the transition to language: A longitudinal investigation of infants’ vocalizations, gestures and word production. Developmental Science, 23(1), e12843. https://doi.org/10.1111/desc.12843
 
-Repo: https://github.com/paulgering/masters_project
+Repository for this project: <https://github.com/paulgering/masters_project>, 
+Pre-registration for this project on the OSF: <https://osf.io/t4r3u>,
+Pre-registration for full RCT on the OSF: <https://osf.io/kme68/>
