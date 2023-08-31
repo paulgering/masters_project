@@ -354,6 +354,29 @@ study</strong></h1>
 </div>
 
 
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<div id="project-aim" class="section level2">
+<h2>Project Aim</h2>
+<p>This project analyses and visualises data as part of a postgraduate
+dissertation investigating whether infant vocabulary size at 17 months
+can be predicted from infant prelinguistic communication and caregiver
+responses at 12 months (<a href="https://osf.io/t4r3u" class="uri">https://osf.io/t4r3u</a>). The 12-month data was coded from
+5-minute video recordings of caregiver-infant interactions at home.
+Infant vocabulary size data was collected from parent responses to the
+MacArthur Communicative Development Inventories (CDI). The 12-month data
+was collected from 125 families, 122 of which provided responses to the
+MacArthur CDI at 17 months. These families were part of a wider RCT
+investigating the effectiveness of an online parent-focused intervention
+using resources from the BBC’s Tiny Happy People Programme (<a href="https://osf.io/kme68/" class="uri">https://osf.io/kme68/</a>).</p>
+</div>
+<div id="project-organisation" class="section level2">
+<h2>Project Organisation</h2>
+<p>The /raw folder contains the raw data used for this project and /figs
+contains the figures produced from this project.</p>
+<p>A codebook can be found in the /raw folder, which describes the
+dataset that is used for this project.</p>
+</div>
 <div id="loading-packages" class="section level2">
 <h2>Loading packages</h2>
 <pre class="r"><code>#renv - Store packages and keep account of package versions
@@ -443,6 +466,9 @@ wp.poisson(n = NULL, exp0 = baselinerate, exp1 = slope, alpha = 0.05, power = 0.
 ## 
 ## URL: http://psychstat.org/poisson</code></pre>
 </div>
+</div>
+<div id="data-preparation" class="section level1">
+<h1>Data preparation</h1>
 <div id="preparing-the-researcher-coded-behaviours" class="section level2">
 <h2>Preparing the researcher-coded behaviours</h2>
 <p>The below code is used to prepare the counts of researcher-coded
@@ -477,6 +503,19 @@ df2$centered_age &lt;- scale(df2$age_at_survey, center = TRUE, scale = FALSE)</c
 </div>
 <div id="reliability-check" class="section level2">
 <h2>Reliability check</h2>
+<p>Since there were two coders who independently coded the 12-month
+data, the intraclass correlation (ICC) was calculated for the counts of
+each of the behaviour categories that were coded. The code below was
+used to determine the reliability of the coder counts for the following
+behaviour categories: 1) Infant intentional prelinguistic communicative
+acts (PCA; the total number of showing, giving, index-finger points and
+gaze-coordinated vocalisations) that elicited a semantically contingent
+(SC) response 2) Infant intentional PCAs that elicited a content-light
+(CL) response The reliability of the coder counts for the other four
+behaviour categories were calculated by Salter et al. (submitted), who
+conducted an analysis of the 12-month data from the full RCT. The ICC
+for all behaviour categories indicated good reliability (0.71 -
+0.88).</p>
 <pre class="r"><code>#PCA only reliability, SC responses
 Coder1=data.frame(cbind(df$participant,df$twelve_sc_pca_only_1,rep(1,length(df$participant))))
 names(Coder1) &lt;- c(&quot;id&quot;,&quot;y&quot;,&quot;met&quot;)
@@ -502,6 +541,9 @@ ICC(icc_counts(for_icc,y=&quot;y&quot;,id=&quot;id&quot;,met=&quot;met&quot;,typ
 <pre><code>##            ICC  SE ICC 95% CI LL 95% CI UL
 ## [1,] 0.7761432 0.11833 0.4237818 0.9244645</code></pre>
 </div>
+</div>
+<div id="data-analysis" class="section level1">
+<h1>Data analysis</h1>
 <div id="fitting-the-models-to-a-poisson-distribution" class="section level2">
 <h2>Fitting the models to a Poisson Distribution</h2>
 <p>Building the models using poisson regressions. Each model contains
@@ -1219,6 +1261,7 @@ models:</p>
 <p>The rest of the R code was written following pre-registration and
 conducting the primary data analysis.</p>
 </div>
+</div>
 <div id="secondary-data-analysis" class="section level1">
 <h1>Secondary data analysis</h1>
 <div id="comparing-the-fit-of-model-2-and-the-null-model" class="section level2">
@@ -1353,14 +1396,31 @@ with a score on the predictor variable one inter quartile range above
 the median Lower - the lower bound of IQR_above_median with a 95%
 confidence interval Upper - the upper bound of IQR_above_median with a
 95% confidence interval</p>
-<pre class="r"><code>my_table &lt;- data.frame(
-  Column1 = c(&quot;PCA (M1)&quot;, &quot;PCA + response (M2)&quot;, &quot;PCA + CL response (M3)&quot;, &quot;PCA + SC response (M4)&quot;, &quot;PCA + vocs + response (M5)&quot;, &quot;PCA + vocs + CL response (M6)&quot;, &quot;PCA + vocs + SL response (M7)&quot;), 
-  Column2 = c(vocab_median_pca, vocab_median_responses_pca, vocab_median_cl_pca, vocab_median_sc_pca, vocab_median_responses_all, vocab_median_cl_all, vocab_median_sc_all), 
-  Column3 = c(vocab_1_IQR_above_median_pca, vocab_1_IQR_above_median_responses_pca, vocab_1_IQR_above_median_cl_pca, vocab_1_IQR_above_median_sc_pca, vocab_1_IQR_above_median_responses_all, vocab_1_IQR_above_median_cl_all, vocab_1_IQR_above_median_sc_all), 
-  Column4 = c(vocab_1_IQR_above_median_pca_lb, vocab_1_IQR_above_median_responses_pca_lb, vocab_1_IQR_above_median_cl_pca_lb, vocab_1_IQR_above_median_sc_pca_lb, vocab_1_IQR_above_median_responses_all_lb, vocab_1_IQR_above_median_cl_all_lb, vocab_1_IQR_above_median_sc_all_lb),
-  Column5 = c(vocab_1_IQR_above_median_pca_ub, vocab_1_IQR_above_median_responses_pca_ub, vocab_1_IQR_above_median_cl_pca_ub, vocab_1_IQR_above_median_sc_pca_ub, vocab_1_IQR_above_median_responses_all_ub, vocab_1_IQR_above_median_cl_all_ub, vocab_1_IQR_above_median_sc_all_ub)
+<pre class="r"><code># Creating a dataframe containing the effect size data
+my_table &lt;- data.frame(
+  Column1 = c(&quot;PCA (M1)&quot;, &quot;PCA + response (M2)&quot;, 
+              &quot;PCA + CL response (M3)&quot;, &quot;PCA + SC response (M4)&quot;, 
+              &quot;PCA + vocs + response (M5)&quot;, &quot;PCA + vocs + CL response (M6)&quot;, 
+              &quot;PCA + vocs + SL response (M7)&quot;),                   # Variable names
+  Column2 = c(vocab_median_pca, vocab_median_responses_pca, 
+              vocab_median_cl_pca, vocab_median_sc_pca, 
+              vocab_median_responses_all, vocab_median_cl_all, 
+              vocab_median_sc_all),                               # Vocabulary size for median of the predictors
+  Column3 = c(vocab_1_IQR_above_median_pca, vocab_1_IQR_above_median_responses_pca, 
+              vocab_1_IQR_above_median_cl_pca, vocab_1_IQR_above_median_sc_pca, 
+              vocab_1_IQR_above_median_responses_all, vocab_1_IQR_above_median_cl_all, 
+              vocab_1_IQR_above_median_sc_all),      # Vocabulary size 1 IQR above the median of the predictors
+  Column4 = c(vocab_1_IQR_above_median_pca_lb, vocab_1_IQR_above_median_responses_pca_lb, 
+              vocab_1_IQR_above_median_cl_pca_lb, vocab_1_IQR_above_median_sc_pca_lb, 
+              vocab_1_IQR_above_median_responses_all_lb, vocab_1_IQR_above_median_cl_all_lb, 
+              vocab_1_IQR_above_median_sc_all_lb),                                      # Lower bound
+  Column5 = c(vocab_1_IQR_above_median_pca_ub, vocab_1_IQR_above_median_responses_pca_ub, 
+              vocab_1_IQR_above_median_cl_pca_ub, vocab_1_IQR_above_median_sc_pca_ub, 
+              vocab_1_IQR_above_median_responses_all_ub, vocab_1_IQR_above_median_cl_all_ub, 
+              vocab_1_IQR_above_median_sc_all_ub)                                       # Upper bound
 )
 
+# Adding column names to the dataframe 
 colnames(my_table) &lt;- c(&quot;variable&quot;, &quot;median&quot;, &quot;IQR_above_median&quot;, &quot;lower&quot;, &quot;upper&quot;)
 
 my_table</code></pre>
@@ -1383,7 +1443,8 @@ Therefore, the value in the IQR_above_median column now denote the
 change in vocabulary size per 1IQR increase from the median in the
 predictor. This will facilitate comparison between the effects of each
 of the predictor variables on the outcome variable.</p>
-<pre class="r"><code>my_table1 &lt;- my_table %&gt;%
+<pre class="r"><code># Creating a new dataframe with the centred data. 
+my_table1 &lt;- my_table %&gt;%
   mutate(
     IQR_above_median = IQR_above_median - median, 
     lower = lower - median, 
@@ -1407,12 +1468,13 @@ median and the upper bound. The function coord_flip() was used to rotate
 the axis so that the x axis would be presented vertically and the y axis
 horizontally. Finally, the plot margins were set and axis labels and a
 title were added to the graph.</p>
-<pre class="r"><code>p &lt;- ggplot(data = my_table1, 
+<pre class="r"><code># Creating a ggplot with the effect size data
+p &lt;- ggplot(data = my_table1, 
             aes(x = reorder(variable, IQR_above_median),
                 y = IQR_above_median, ymin = lower, ymax = upper)) + 
   scale_y_continuous(breaks = seq(-20, 70, by = 10)) + # setting the units of the y axis
-  geom_hline(yintercept = 0, linetype = &quot;dotted&quot;, color = &quot;black&quot;) + # drawing a dotted line at the 0 point on the y axis
-  geom_pointrange() + # drawing a line between the lower and upper bound for each predictor
+  geom_hline(yintercept = 0, linetype = &quot;dotted&quot;, color = &quot;black&quot;) + # dotted line at 0 point on the y axis
+  geom_pointrange() + # drawing lines between lower and upper bound for each predictor
   coord_flip() + # rotating the axis
   labs(x = &quot;Caregiver-infant dyadic sequences (predictors)&quot;,
        y = &quot;Change in vocabulary size per 1 SD increase from the median in the predictor&quot;,
