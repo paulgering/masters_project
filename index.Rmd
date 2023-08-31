@@ -449,7 +449,7 @@ p <- ggplot(data = my_table1,
        title = "The effects of caregiver-infant dyadic sequences on infant vocabulary size") + # the labels of the graph 
   theme(axis.title.x = element_text(size = 10, margin = margin(t = 15)), 
         plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "inches"), 
-        plot.title = element_text(size = 12, hjust = 0.68)) #Set the plot margins and the distance between the axis and the labels 
+        plot.title = element_text(size = 12, hjust = 0.73)) #Set the plot margins and the distance between the axis and the labels 
 
 p
 
